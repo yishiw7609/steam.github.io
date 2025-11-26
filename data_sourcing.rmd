@@ -1,0 +1,16 @@
+---
+title: "Data Sourcing and Cleaning"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(plotly)
+library(knitr)
+```
+
+Our data is parsed from [kaggle](https://www.kaggle.com/datasets/fronkongames/steam-games-dataset?select=games.csv). The author of this dataset is [Martin Bustos]:(https://github.com/FronkonGames)

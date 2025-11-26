@@ -1,5 +1,6 @@
 body {
-  background: radial-gradient(#050608);
+  background: radial-gradient(#1b2838 0, #0b0c10 50%, #050608 100%);
+  color: #e6e9f0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -12,13 +13,36 @@ body {
   border-bottom: 2px solid #66c0f4;
 }
 
+.navbar-default .navbar-brand,
+.navbar-default .navbar-nav > li > a {
+  color: #e6e9f0;
+  font-weight: 500;
+}
 
+.navbar-default .navbar-brand:hover,
+.navbar-default .navbar-nav > li > a:hover {
+  color: #66c0f4;
+}
+
+.dropdown-menu {
+  background-color: #0b1a2b;
+}
+
+.dropdown-menu > li > a {
+  color: #e6e9f0;
+}
+
+.dropdown-menu > li > a:hover {
+  background-color: #13233a;
+  color: #66c0f4;
+}
 
 h1, h2, h3, h4 {
   color: #66c0f4;
   text-shadow: 0 0 4px rgba(102,192,244,0.5);
 }
 
+/* Links */
 a, a:visited {
   color: #66c0f4;
 }
@@ -52,3 +76,12 @@ table.table > tbody > tr:hover {
   background-color: rgba(16, 32, 54, 0.95);
 }
 
+.tocify {
+  background-color: rgba(5, 10, 20, 0.95);
+  border-radius: 6px;
+  border: 1px solid #1b3b52;
+}
+
+footer, .footer, .small {
+  color: #9fa6b5;
+}

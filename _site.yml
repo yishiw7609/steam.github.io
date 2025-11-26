@@ -6,13 +6,13 @@ navbar:
     - text: "About us"
       href: about.html
   right:
-    - text: "Data Sources"
-      href: source.html
+    - text: "Data Sourcing"
+      href: data_sourcing.html
     - text: "Topic 1"
       href: topic1.html
     - text: "Topic 2"
       href: topic2.html
-    - text: "Project Report"
+    - text: "Report"
       href: report.html
     - icon: fa-github fa-lg
       href: https://github.com/yishiw7609/steam.github.io

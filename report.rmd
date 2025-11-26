@@ -1,0 +1,14 @@
+---
+title: "Written Report"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(plotly)
+library(knitr)
+```
