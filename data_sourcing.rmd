@@ -7,10 +7,16 @@ output:
     code_folding: hide
 ---
 
+# Data Source
+
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(plotly)
 library(knitr)
 ```
 
-Our data is parsed from [kaggle](https://www.kaggle.com/datasets/fronkongames/steam-games-dataset?select=games.csv). The author of this dataset is [Martin Bustos]:(https://github.com/FronkonGames)
+Our data is parsed from [kaggle](https://www.kaggle.com/datasets/fronkongames/steam-games-dataset?select=games.csv). The author of this dataset is [Martin Bustos](https://github.com/FronkonGames)
+
+# Cleaning Data
+
+# Key Variables 
