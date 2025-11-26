@@ -20,6 +20,13 @@ navbar:
       menu:
         - text: "Yishi Wang"
           href: mailto:yw4665@cumc.columbia.edu
+        - text: "Yutong Mao"
+          href: mailto:ym3139@cumc.columbia.edu
+        - text: "Tao Wu"
+          href: mailto:tw3108@cumc.columbia.edu
+        - text: "Yiquan Zhou"
+          href: mailto:yz5227@cumc.columbia.edu
+          
 output:
   html_document:
     theme: flatly
