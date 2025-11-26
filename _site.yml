@@ -1,7 +1,7 @@
 name: "Steam Games"
 output_dir: "."
 navbar:
-  title: "Steam Games"
+  title: "Home"
   left:
     - text: "About us"
       href: about.html
