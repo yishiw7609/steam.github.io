@@ -1,14 +1,26 @@
-name: "Yay internet!"
+name: "Steam Games"
 output_dir: "."
 navbar:
   title: "Home"
-  right:
-    - text: "About"
+  left:
+    - text: "About us"
       href: about.html
-    - icon: fa-envelope fa-lg
-      href: mailto:<you@youremail.com>
+  right:
+    - text: "Data Sources"
+      href: source.html
+    - text: "Topic 1"
+      href: topic1.html
+    - text: "Topic 2"
+      href: topic2.html
+    - text: "Project Report"
+      href: report.html
     - icon: fa-github fa-lg
-      href: http://github.com/yishiw7609/
+      href: https://github.com/yishiw7609/steam.github.io
+    - icon: fa-envelope fa-lg
+      menu:
+        - text: "Yishi Wang"
+          href: mailto:cj2793@cumc.columbia.edu
 output:
   html_document:
-    theme: cerulean
+    theme: cosmo
+    highlight: textmate
