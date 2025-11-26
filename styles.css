@@ -76,12 +76,39 @@ table.table > tbody > tr:hover {
   background-color: rgba(16, 32, 54, 0.95);
 }
 
-.tocify {
-  background-color: rgba(5, 10, 20, 0.95);
+/* Table of Contents*/
+.tocify,
+.tocify ul,
+.tocify li {
+  background: rgba(15, 24, 38, 0.95) !important;   /* dark panel */
   border-radius: 6px;
   border: 1px solid #1b3b52;
 }
 
-footer, .footer, .small {
-  color: #9fa6b5;
+.tocify .active {
+  background-color: #13233a !important;
+  color: #66c0f4 !important;
 }
+
+.tocify li {
+  color: #e6e9f0 !important;
+}
+
+.tocify li:hover {
+  background-color: rgba(16, 32, 54, 0.95) !important;
+}
+
+.tocify {
+  box-shadow: none !important;
+}
+
+.tocify {
+  background: linear-gradient(180deg,
+      rgba(0, 20, 40, 0.95),
+      rgba(5, 10, 16, 0.95));
+}
+
+.tocify .active {
+  text-shadow: 0 0 6px rgba(102,192,244,0.8);
+}
+
