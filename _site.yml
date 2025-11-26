@@ -1,7 +1,7 @@
 name: "Steam Games"
 output_dir: "."
 navbar:
-  title: "Home"
+  title: "Steam Games"
   left:
     - text: "About us"
       href: about.html
@@ -19,8 +19,9 @@ navbar:
     - icon: fa-envelope fa-lg
       menu:
         - text: "Yishi Wang"
-          href: mailto:cj2793@cumc.columbia.edu
+          href: mailto:yw4665@cumc.columbia.edu
 output:
   html_document:
-    theme: cosmo
-    highlight: textmate
+    theme: flatly
+    highlight: breezedark
+    css: styles.css
