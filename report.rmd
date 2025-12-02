@@ -12,3 +12,7 @@ library(tidyverse)
 library(plotly)
 library(knitr)
 ```
+
+# Motivation
+
+Our motivation for this topic comes from our enthusiasm towards gaming. As an important part of society, games are now treated as a major method of entertainment and creates a huge market for players and creators across the globe. This project focuses on PC games from the Steam platform and their score on Metacritic.com. To see which variables contributes to a higher review score, we analyze the positive and negative votes, price, peak player amount, and many 
