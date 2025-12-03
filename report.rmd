@@ -15,4 +15,29 @@ library(knitr)
 
 # Motivation
 
-Our motivation for this topic comes from our enthusiasm towards gaming. As an important part of society, games are now treated as a major method of entertainment and creates a huge market for players and creators across the globe. This project focuses on PC games from the Steam platform and their score on Metacritic.com. The project aims to undercover the correlation 
+Video game industry is a highly competitive market where thousands of new products are released annually. For developers, understanding the specific factors that drive player engagement is important when allocating their resources. For players facing an overwhelming number of choices, identifying games that align with their interests is a challenge. This project is motivated by both the need to bridge this gap and our enthusiasm towards gaming: by analyzing real-world data from [Steam](https://en.wikipedia.org/wiki/Steam_(service)), we aim to build a predictive model that can estimate a game's popularity based on pre-release information.
+
+# Related Work
+
+Our work is inspired by the recent kick-off of [TGA](https://thegameawards.com/nominees/game-of-the-year): An once-a-year celebration of game developers and players, simply consider it as the Oscar of gaming industry.
+
+# Initial Question
+
+Our major questions is: **What are the primary drivers of game popularity on Steam?**
+
+As we explored the dataset, this question evolved into more specific hypotheses:
+"Does a higher price point correlate with higher quality and thus more playtime?" "Is the relationship between price and engagement non-linear, perhaps differing for Indie vs. AAA titles?"
+"Do critical reviews (Metacritic) serve as a better predictor of peak concurrent users than user reviews?"
+"Can the number of DLCs act as a proxy for a game's longevity?"
+
+# Data
+## Data Source
+## Scraping Method
+## Cleaning
+## Key Variables
+
+# Exploratory Data Analysis
+
+# Additional Analysis
+
+# Conclusion and Findings
