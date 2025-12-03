@@ -19,4 +19,9 @@ Our data is parsed from [kaggle](https://www.kaggle.com/datasets/fronkongames/st
 
 # Cleaning Data
 
+```{r}
+steam_df = read_csv("data/steam_games.csv")
+```
+
+
 # Key Variables 
