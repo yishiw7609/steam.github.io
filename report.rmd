@@ -11,6 +11,7 @@ output:
 library(tidyverse)
 library(plotly)
 library(knitr)
+library(lubridate)
 ```
 
 # Motivation
@@ -21,7 +22,7 @@ Video game industry is a highly competitive market where thousands of new produc
 
 Our work is inspired by the recent kick-off of [TGA](https://thegameawards.com/nominees/game-of-the-year): An once-a-year celebration of game developers and players, simply consider it as the Oscar of gaming industry.
 
-# Initial Question
+# Initial Questions
 
 Our major questions is: **What are the primary drivers of game popularity on Steam?**
 
@@ -31,13 +32,100 @@ As we explored the dataset, this question evolved into more specific hypotheses:
 "Can the number of DLCs act as a proxy for a game's longevity?"
 
 # Data
+
 ## Data Source
+
+The dataset used for this project is made possible by [FronkonGames](https://fronkongames.github.io/) and is sourced at [huggingface.co](https://huggingface.co/datasets/FronkonGames/steam-games-dataset).
+
 ## Scraping Method
+
+The author provides an official python script to scrape this dataset, it can be viewed [here]("data/scrapping.py"). Additionally, we did some sampling 
+from local. The chunk below converted a dataframe of 110000 rows to 10629 rows to pass Github's file uploading size. It is not meant to be ran:
+```{r}
+# df = read_csv("steam_games.csv") |>
+#   filter(!is.na(average_playtime),
+#          !is.na(peak_ccu),
+#          !is.na(median_playtime))
+
+# write_csv(df, "steam_games.csv")
+```
+
 ## Cleaning
+
+During the cleaning process, our pipeline aims to:
+
+-Make sure variable names are consistent across columns
+
+-Select only the unique identifier and necessary variables for our popularity analysis
+
+-Make sure continuous variables are numeric
+
+-Make sure `release_date` is in date format
+
+-Convert the `estimated_owners` from a range to a numeric value by taking the midpoint
+
+-Make sure no zeros or NAs are present in `average_playtime`, `median_playtime` and `peak_ccu` as they are meaningless in these columns
+
+```{r}
+steam_df = read_csv("data/steam_games.csv") |>
+  janitor::clean_names() |>
+  select(
+    app_id, name, release_date, price, required_age,
+    estimated_owners, peak_ccu, average_playtime, median_playtime,
+    achievements, dlc_count, developers, publishers,
+    categories, genres, tags, positive, negative
+  ) |>
+  mutate(
+    price = as.numeric(price),
+    required_age = as.numeric(required_age),
+    achievements = as.numeric(achievements),
+    dlc_count = as.numeric(dlc_count),
+    positive = as.numeric(positive),
+    negative = as.numeric(negative),
+    release_date = mdy(release_date)
+  ) |>
+  mutate(estimated_owners = str_extract(estimated_owners, "\\d+"),
+         estimated_owners = as.numeric(estimated_owners)) |>
+  filter(
+    average_playtime > 0,
+    median_playtime > 0,
+    peak_ccu > 0
+  )
+
+```
+
 ## Key Variables
+
+**app_id**: Unique identifier of each game
+
+**name**: Game name on Steam
+
+**release_date**: Official releasing time in yyyy-mm-dd
+
+**price**: Price in USD
+
+**estimated_owners**: Rough estimate of owners
+
+**peak_ccu**: Peak number of online concurrent users
+
+**average_playtime, median_playtime**: Play time in hours
+
+**dlc_count**: Number of DLCs (expansion or extra chapters sold separately from the game)
+
+**developers, publishers**: Creator of the game / Seller of the game
+
+**categories**: Type of the game
+
+**genres**: Theme of the game
+
+**tags**: Tags added by users
+
+**positive, negative**: Number of positivie / negative reviews by user on Steam
 
 # Exploratory Data Analysis
 
+
 # Additional Analysis
+
 
 # Conclusion and Findings
