@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
   echo = TRUE,
   warning = FALSE,
   message = FALSE,
-  dpi = 300
+  dev.args = list(bg = "transparent")
   )
 ```
 
@@ -22,6 +22,19 @@ library(plotly)
 library(knitr)
 library(lubridate)
 library(ggcorrplot)
+library(plotly)
+
+
+steam_theme <- theme_classic() + 
+  theme(
+    panel.background = element_rect(fill = "transparent", color = NA), 
+    plot.background = element_rect(fill = "transparent", color = NA),
+    legend.background = element_rect(fill = "transparent", color = NA),
+    legend.box.background = element_rect(fill = "transparent", color = NA),
+    text = element_text(color = "#66c0f4")
+    )
+
+theme_set(steam_theme)
 ```
 
 # Motivation
@@ -120,6 +133,8 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 **average_playtime, median_playtime**: Playtime since March 2009, in minutes
 
+**achievements**: Number of unlockable achievements 
+
 **dlc_count**: Number of DLCs (expansion or extra chapters sold separately from the game)
 
 **developers, publishers**: Creator of the game / Seller of the game
@@ -134,33 +149,138 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 # Exploratory Data Analysis
 
-In this study, we define "popularity" with playtime and peak concurrent users. Let's first look at the distribution of average time of these games. Note that playtime data is heavyly tailed (most games are barely played, and a few games dominate), so we apply a log transformation here to see a meaningful distribution and avoid outliers.
+In this study, we consider both playtime and peak concurrent users to reflect a game's popularity. Let's first look at the distribution of these games.
+
+## Popularity Distributions
+
 ```{r}
-average_playtime_distribution = steam_df |> 
+apt_distribution = steam_df |> 
   ggplot(aes(x = average_playtime)) +
-  geom_histogram(bins = 50) +
+  geom_histogram(bins = 50, fill = "#66c0f4") +
   scale_x_continuous(trans = "log10") +
   labs(
     title = "Distribution of Average Playtime (Log Scale)",
-    x = "Average playtime (minutes, log10 scale)"
+    x = "Average playtime (minutes)"
   )
 
-average_playtime_distribution
+ggplotly(apt_distribution)
+```
+
+```{r}
+pccu_distribution = steam_df |>
+  ggplot(aes(x = peak_ccu)) +
+  geom_histogram(bins = 50, fill = "#66c0f4") +
+  scale_x_continuous(trans = "log10") +
+  labs(
+    title = "Distribution of Peak Concurrent Users (Log Scale)",
+    x = "Peak CCU"
+  )
+
+ggplotly(pccu_distribution)
+```
+
+Note that playtime and peak_ccu are both heavyly tailed (most games are barely played, and a few games dominate), so we apply a log transformation here to see a meaningful distribution and avoid outliers.
+
+## Estimated Owners vs Popularity 
+
+Owners represent the overall reach of a game while peak_ccu reflects active use. Games with high owner counts but low CCU may indicate weak long-term engagement.
+```{r}
+eo_trend = steam_df |>
+  ggplot(aes(x = estimated_owners, y = peak_ccu)) +
+  geom_point(alpha = 0.3, color = "#66c0f4") +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Estimated Owners vs Peak CCU",
+    x = "Estimated Owners",
+    y = "Peak CCU"
+  )
+
+ggplotly(eo_trend)
+```
+
+## Release Time Trends
+
+```{r}
+rt_trend = steam_df |>
+  ggplot(aes(x = release_date, y = average_playtime)) +
+  geom_point(alpha = 0.3, color = "#66c0f4") +
+  geom_smooth(se = FALSE, color = "#e6e9f0") +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Engagement Patterns by Release Year",
+    y = "Average playtime"
+  )
+
+ggplotly(rt_trend)
+```
+
+## Popularity by Genre
+
+Genres encapsulate game design choices. This identifies which genres tend to drive deeper engagement.
+
+```{r}
+genres_trend = steam_df|>
+  separate_rows(genres, sep = ",") |>
+  mutate(weight = estimated_owners) |>
+  group_by(genres) |>
+  summarize(
+    weighted_playtime = weighted.mean(average_playtime, w = weight, na.rm = TRUE),
+    total_owners = sum(estimated_owners, na.rm = TRUE),
+    n_games = n()
+  ) |>
+  arrange(desc(weighted_playtime)) |>
+  slice_head(n = 20) |>
+  ggplot(aes(x = reorder(genres, weighted_playtime), 
+             y = weighted_playtime)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top Genres by Weighted Average Playtime",
+    x = "Genre",
+    y = "Weighted Mean Playtime (minutes)"
+  )
+
+ggplotly(genres_trend)
+```
+
+## Review Ratio vs Popularity
+
+Reviews reflect user satisfaction. If higher satisfaction correlates with higher playtime, review sentiment becomes a strong candidate predictor.
+
+```{r}
+rr_trend = steam_df |>
+  mutate(review_ratio = positive / (positive + negative)) |>
+  ggplot(aes(x = review_ratio, y = average_playtime)) +
+  geom_point(alpha = 0.3) +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Review Sentiment vs Playtime",
+    x = "Positive Review Ratio",
+    y = "Average playtime (log10)"
+  )
+
+ggplotly(rr_trend)
 ```
 
 
+## Correlation
+
+Lastly, we use a correlation graph to check for potential predictors for our model.
+
 ```{r}
-steam_numeric = steam_df |>
+correlation = steam_df |>
   select(price, required_age, estimated_owners, 
          peak_ccu, average_playtime, median_playtime,
-         achievements, dlc_count, positive, negative)
-
-steam_numeric |>
+         achievements, dlc_count, positive, negative) |>
   cor(use = "complete.obs") |>
-  ggcorrplot(lab = TRUE)
+  ggcorrplot(lab = TRUE, ggtheme = steam_theme)
+
+ggplotly(correlation)
 ```
 
 # Additional Analysis
+
 
 
 # Conclusion and Findings
