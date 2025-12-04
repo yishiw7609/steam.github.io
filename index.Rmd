@@ -1,4 +1,4 @@
 ---
-title: "My awesome website"
+title: "Steam Games Popularity Analysis"
 ---
 

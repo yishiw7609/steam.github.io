@@ -62,7 +62,7 @@ The dataset used for this project is made possible by [FronkonGames](https://fro
 
 ## Scraping
 
-The author provides an official python script to scrape this dataset, it can be viewed [here]("data/scrapping.py"). Additionally, we did some sampling 
+The author provides an official python script to scrape this dataset, it can be viewed [here](data/scrapping.py). Additionally, we did some sampling 
 from local. The chunk below converted a dataframe of 110000 rows to 10629 rows to pass Github's file uploading size. It is not meant to be ran.
 ```{r}
 # df = read_csv("steam_games.csv") |>
@@ -83,7 +83,7 @@ During the cleaning process, our pipeline aims to:
 
 -Make sure continuous variables are numeric
 
--Make sure `release_date` is in date format
+-Make sure `release_date` is in date format for later manipulations
 
 -Convert the `estimated_owners` from a range to a numeric value by taking the midpoint
 
@@ -93,15 +93,12 @@ During the cleaning process, our pipeline aims to:
 steam_df = read_csv("data/steam_games.csv") |>
   janitor::clean_names() |>
   select(
-    app_id, name, release_date, price, required_age,
+    app_id, name, release_date, price,
     estimated_owners, peak_ccu, average_playtime, median_playtime,
-    achievements, dlc_count, developers, publishers,
-    categories, genres, tags, positive, negative
+    dlc_count, developers, genres, positive, negative
   ) |>
   mutate(
     price = as.numeric(price),
-    required_age = as.numeric(required_age),
-    achievements = as.numeric(achievements),
     dlc_count = as.numeric(dlc_count),
     positive = as.numeric(positive),
     negative = as.numeric(negative),
@@ -133,17 +130,11 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 **average_playtime, median_playtime**: Playtime since March 2009, in minutes
 
-**achievements**: Number of unlockable achievements 
-
 **dlc_count**: Number of DLCs (expansion or extra chapters sold separately from the game)
 
-**developers, publishers**: Creator of the game / Seller of the game
-
-**categories**: Type of the game
+**developers**: Creator of the game
 
 **genres**: Theme of the game
-
-**tags**: Tags added by users
 
 **positive, negative**: Number of positive / negative reviews by user on Steam
 
@@ -217,7 +208,7 @@ ggplotly(rt_trend)
 
 ## Popularity by Genre
 
-Genres encapsulate game design choices. This identifies which genres tend to drive deeper engagement.
+Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 20 most played genres on Steam.
 
 ```{r}
 genres_trend = steam_df|>
@@ -233,7 +224,7 @@ genres_trend = steam_df|>
   slice_head(n = 20) |>
   ggplot(aes(x = reorder(genres, weighted_playtime), 
              y = weighted_playtime)) +
-  geom_col() +
+  geom_col(fill = "#66c0f4") +
   coord_flip() +
   labs(
     title = "Top Genres by Weighted Average Playtime",
@@ -252,7 +243,8 @@ Reviews reflect user satisfaction. If higher satisfaction correlates with higher
 rr_trend = steam_df |>
   mutate(review_ratio = positive / (positive + negative)) |>
   ggplot(aes(x = review_ratio, y = average_playtime)) +
-  geom_point(alpha = 0.3) +
+  geom_point(alpha = 0.3, color = "#66c0f4") +
+  geom_smooth(se = FALSE, color = "#e6e9f0") +
   scale_y_continuous(trans = "log10") +
   labs(
     title = "Review Sentiment vs Playtime",
@@ -270,9 +262,10 @@ Lastly, we use a correlation graph to check for potential predictors for our mod
 
 ```{r}
 correlation = steam_df |>
-  select(price, required_age, estimated_owners, 
+  mutate(release_date = as.numeric(release_date)) |>
+  select(price, estimated_owners, release_date,
          peak_ccu, average_playtime, median_playtime,
-         achievements, dlc_count, positive, negative) |>
+         dlc_count, positive, negative) |>
   cor(use = "complete.obs") |>
   ggcorrplot(lab = TRUE, ggtheme = steam_theme)
 

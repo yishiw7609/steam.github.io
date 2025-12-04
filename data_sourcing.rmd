@@ -7,21 +7,97 @@ output:
     code_folding: hide
 ---
 
-# Data Source
-
-```{r message=FALSE, warning=FALSE}
-library(tidyverse)
-library(plotly)
-library(knitr)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  dev.args = list(bg = "transparent")
+  )
 ```
-
-Our data is parsed from [kaggle](https://www.kaggle.com/datasets/fronkongames/steam-games-dataset?select=games.csv). The author of this dataset is [Martin Bustos](https://github.com/FronkonGames)
-
-# Cleaning Data
 
 ```{r}
-steam_df = read_csv("data/steam_games.csv")
+library(tidyverse)
+library(knitr)
+```
+# Data Source
+
+The dataset used for this project is made possible by [FronkonGames](https://fronkongames.github.io/) and is sourced at [huggingface.co](https://huggingface.co/datasets/FronkonGames/steam-games-dataset).
+
+# Scraping
+
+The author provides an official python script to scrape this dataset, it can be viewed [here](data/scrapping.py). Additionally, we did some sampling 
+from local. The chunk below converted a dataframe of 110000 rows to 10629 rows to pass Github's file uploading size. It is not meant to be ran.
+```{r}
+# df = read_csv("steam_games.csv") |>
+#   filter(!is.na(average_playtime),
+#          !is.na(peak_ccu),
+#          !is.na(median_playtime))
+
+# write_csv(df, "steam_games.csv")
 ```
 
+# Cleaning
 
-# Key Variables 
+During the cleaning process, our pipeline aims to:
+
+- Make sure variable names are consistent across columns
+
+- Select only the unique identifier and necessary variables for our popularity analysis
+
+- Make sure continuous variables are numeric
+
+- Make sure `release_date` is in date format for later manipulations
+
+- Convert the `estimated_owners` from a range to a numeric value by taking the midpoint
+
+- Make sure no zeros or NAs are present in `average_playtime`, `median_playtime` and `peak_ccu` as they are meaningless in these columns
+
+```{r}
+steam_df = read_csv("data/steam_games.csv") |>
+  janitor::clean_names() |>
+  select(
+    app_id, name, release_date, price,
+    estimated_owners, peak_ccu, average_playtime, median_playtime,
+    dlc_count, developers, genres, positive, negative
+  ) |>
+  mutate(
+    price = as.numeric(price),
+    dlc_count = as.numeric(dlc_count),
+    positive = as.numeric(positive),
+    negative = as.numeric(negative),
+    release_date = mdy(release_date)
+  ) |>
+  mutate(estimated_owners = str_extract(estimated_owners, "\\d+"),
+         estimated_owners = as.numeric(estimated_owners)) |>
+  filter(
+    average_playtime > 0,
+    median_playtime > 0,
+    peak_ccu > 0
+  )
+
+```
+
+# Key Variables
+
+**app_id**: Unique identifier of each game
+
+**name**: Game name on Steam
+
+**release_date**: Official releasing time in yyyy-mm-dd format
+
+**price**: Price in USD
+
+**estimated_owners**: Rough estimate of owners
+
+**peak_ccu**: Peak number of online concurrent users
+
+**average_playtime, median_playtime**: Playtime since March 2009, in minutes
+
+**dlc_count**: Number of DLCs (expansion or extra chapters sold separately from the game)
+
+**developers**: Creator of the game
+
+**genres**: Theme of the game
+
+**positive, negative**: Number of positive / negative reviews by user on Steam
