@@ -498,7 +498,8 @@ div.tocify {
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(plotly)</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span></code></pre></div>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">library</span>(ggcorrplot)</span></code></pre></div>
 <div id="motivation" class="section level1">
 <h1>Motivation</h1>
 <p>Video game industry is a highly competitive market where thousands of
@@ -540,13 +541,13 @@ href="https://fronkongames.github.io/">FronkonGames</a> and is sourced
 at <a
 href="https://huggingface.co/datasets/FronkonGames/steam-games-dataset">huggingface.co</a>.</p>
 </div>
-<div id="scraping-method" class="section level2">
-<h2>Scraping Method</h2>
+<div id="scraping" class="section level2">
+<h2>Scraping</h2>
 <p>The author provides an official python script to scrape this dataset,
 it can be viewed <a href="%22data/scrapping.py%22">here</a>.
 Additionally, we did some sampling from local. The chunk below converted
 a dataframe of 110000 rows to 10629 rows to pass Github’s file uploading
-size. It is not meant to be ran:</p>
+size. It is not meant to be ran.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># df = read_csv(&quot;steam_games.csv&quot;) |&gt;</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#   filter(!is.na(average_playtime),</span></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#          !is.na(peak_ccu),</span></span>
@@ -591,15 +592,6 @@ value by taking the midpoint</p>
 <span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>    median_playtime <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
 <span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>    peak_ccu <span class="sc">&gt;</span> <span class="dv">0</span></span>
 <span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## Rows: 10629 Columns: 40
-## ── Column specification ────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (20): name, release_date, estimated_owners, detailed_description, short_...
-## dbl (15): app_id, peak_ccu, required_age, price, dlc_count, metacritic_score...
-## lgl  (5): windows, mac, linux, score_rank, screenshots
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
 <div id="key-variables" class="section level2">
 <h2>Key Variables</h2>
@@ -610,8 +602,8 @@ yyyy-mm-dd</p>
 <p><strong>price</strong>: Price in USD</p>
 <p><strong>estimated_owners</strong>: Rough estimate of owners</p>
 <p><strong>peak_ccu</strong>: Peak number of online concurrent users</p>
-<p><strong>average_playtime, median_playtime</strong>: Play time in
-hours</p>
+<p><strong>average_playtime, median_playtime</strong>: Playtime since
+March 2009, in minutes</p>
 <p><strong>dlc_count</strong>: Number of DLCs (expansion or extra
 chapters sold separately from the game)</p>
 <p><strong>developers, publishers</strong>: Creator of the game / Seller
@@ -619,12 +611,38 @@ of the game</p>
 <p><strong>categories</strong>: Type of the game</p>
 <p><strong>genres</strong>: Theme of the game</p>
 <p><strong>tags</strong>: Tags added by users</p>
-<p><strong>positive, negative</strong>: Number of positivie / negative
+<p><strong>positive, negative</strong>: Number of positive / negative
 reviews by user on Steam</p>
 </div>
 </div>
 <div id="exploratory-data-analysis" class="section level1">
 <h1>Exploratory Data Analysis</h1>
+<p>In this study, we define “popularity” with playtime and peak
+concurrent users. Let’s first look at the distribution of average time
+of these games. Note that playtime data is heavyly tailed (most games
+are barely played, and a few games dominate), so we apply a log
+transformation here to see a meaningful distribution and avoid
+outliers.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>average_playtime_distribution <span class="ot">=</span> steam_df <span class="sc">|&gt;</span> </span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> average_playtime)) <span class="sc">+</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">50</span>) <span class="sc">+</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">trans =</span> <span class="st">&quot;log10&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Distribution of Average Playtime (Log Scale)&quot;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;Average playtime (minutes, log10 scale)&quot;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  )</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>average_playtime_distribution</span></code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-4-1.png" width="2100" /></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>steam_numeric <span class="ot">=</span> steam_df <span class="sc">|&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">select</span>(price, required_age, estimated_owners, </span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>         peak_ccu, average_playtime, median_playtime,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>         achievements, dlc_count, positive, negative)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>steam_numeric <span class="sc">|&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">ggcorrplot</span>(<span class="at">lab =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-5-1.png" width="2100" /></p>
 </div>
 <div id="additional-analysis" class="section level1">
 <h1>Additional Analysis</h1>

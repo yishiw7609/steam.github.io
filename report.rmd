@@ -7,11 +7,21 @@ output:
     code_folding: hide
 ---
 
-```{r message=FALSE, warning=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  dpi = 300
+  )
+```
+
+```{r}
 library(tidyverse)
 library(plotly)
 library(knitr)
 library(lubridate)
+library(ggcorrplot)
 ```
 
 # Motivation
@@ -37,10 +47,10 @@ As we explored the dataset, this question evolved into more specific hypotheses:
 
 The dataset used for this project is made possible by [FronkonGames](https://fronkongames.github.io/) and is sourced at [huggingface.co](https://huggingface.co/datasets/FronkonGames/steam-games-dataset).
 
-## Scraping Method
+## Scraping
 
 The author provides an official python script to scrape this dataset, it can be viewed [here]("data/scrapping.py"). Additionally, we did some sampling 
-from local. The chunk below converted a dataframe of 110000 rows to 10629 rows to pass Github's file uploading size. It is not meant to be ran:
+from local. The chunk below converted a dataframe of 110000 rows to 10629 rows to pass Github's file uploading size. It is not meant to be ran.
 ```{r}
 # df = read_csv("steam_games.csv") |>
 #   filter(!is.na(average_playtime),
@@ -108,7 +118,7 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 **peak_ccu**: Peak number of online concurrent users
 
-**average_playtime, median_playtime**: Play time in hours
+**average_playtime, median_playtime**: Playtime since March 2009, in minutes
 
 **dlc_count**: Number of DLCs (expansion or extra chapters sold separately from the game)
 
@@ -120,10 +130,35 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 **tags**: Tags added by users
 
-**positive, negative**: Number of positivie / negative reviews by user on Steam
+**positive, negative**: Number of positive / negative reviews by user on Steam
 
 # Exploratory Data Analysis
 
+In this study, we define "popularity" with playtime and peak concurrent users. Let's first look at the distribution of average time of these games. Note that playtime data is heavyly tailed (most games are barely played, and a few games dominate), so we apply a log transformation here to see a meaningful distribution and avoid outliers.
+```{r}
+average_playtime_distribution = steam_df |> 
+  ggplot(aes(x = average_playtime)) +
+  geom_histogram(bins = 50) +
+  scale_x_continuous(trans = "log10") +
+  labs(
+    title = "Distribution of Average Playtime (Log Scale)",
+    x = "Average playtime (minutes, log10 scale)"
+  )
+
+average_playtime_distribution
+```
+
+
+```{r}
+steam_numeric = steam_df |>
+  select(price, required_age, estimated_owners, 
+         peak_ccu, average_playtime, median_playtime,
+         achievements, dlc_count, positive, negative)
+
+steam_numeric |>
+  cor(use = "complete.obs") |>
+  ggcorrplot(lab = TRUE)
+```
 
 # Additional Analysis
 
