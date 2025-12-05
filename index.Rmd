@@ -10,11 +10,13 @@ With The Game Awards (TGA) season officially kicking off and the hype building u
 
 Inspired by these questions, we decided to dive into the data. This project analyzes Steam gaming statistics to uncover the hidden trends behind the games we all play. We hope you enjoy exploring our findings!
 
+Feel free to email us about this project or have a 5-hour long debate on whether Mario or Luigi is superior.
+
 ```{r, echo=FALSE, out.width="75%", fig.align="center"}
 knitr::include_graphics("data/game-of-the-year-all-portrait.webp")
 ```
 
 <br>
 
-P.S.: You can cast your vote [here](https://thegameawards.com/nominees/game-of-the-year)! (Please vote for Silksong)
+P.S.: You can cast your vote [here](https://thegameawards.com/nominees/game-of-the-year)! (Please vote for Silksong ^_^)
 
