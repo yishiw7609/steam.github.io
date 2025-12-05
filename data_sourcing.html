@@ -440,7 +440,7 @@ div.tocify {
   <a href="eda.html">EDA</a>
 </li>
 <li>
-  <a href="topic2.html">Topic 2</a>
+  <a href="modeling.html">Modeling</a>
 </li>
 <li>
   <a href="report.html">Report</a>
@@ -554,7 +554,9 @@ numeric value by taking the midpoint</p></li>
 <span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>    average_playtime <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
 <span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>    median_playtime <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
 <span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>    peak_ccu <span class="sc">&gt;</span> <span class="dv">0</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  )</span></code></pre></div>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  )</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="fu">write_csv</span>(steam_df, <span class="st">&quot;data/clean_steam_games.csv&quot;</span>)</span></code></pre></div>
 </div>
 <div id="key-variables" class="section level1">
 <h1>Key Variables</h1>
@@ -573,6 +575,9 @@ chapters sold separately from the game)</p>
 <p><strong>genres</strong>: Theme of the game</p>
 <p><strong>positive, negative</strong>: Number of positive / negative
 reviews by user on Steam</p>
+<p>With our cleaned dataset, we can proceed to <a
+href="eda.html">Exploratory Data Analysis</a> to find the correlations
+of our interest.</p>
 </div>
 
 

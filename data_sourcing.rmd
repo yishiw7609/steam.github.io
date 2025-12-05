@@ -76,6 +76,7 @@ steam_df = read_csv("data/steam_games.csv") |>
     peak_ccu > 0
   )
 
+write_csv(steam_df, "data/clean_steam_games.csv")
 ```
 
 # Key Variables
@@ -101,3 +102,5 @@ steam_df = read_csv("data/steam_games.csv") |>
 **genres**: Theme of the game
 
 **positive, negative**: Number of positive / negative reviews by user on Steam
+
+With our cleaned dataset, we can proceed to [Exploratory Data Analysis](eda.html) to find the correlations of our interest.

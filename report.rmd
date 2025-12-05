@@ -18,11 +18,11 @@ knitr::opts_chunk$set(
 
 ```{r}
 library(tidyverse)
-library(plotly)
 library(knitr)
 library(lubridate)
 library(ggcorrplot)
 library(plotly)
+library(scales)
 
 
 steam_theme <- theme_classic() + 
@@ -140,22 +140,15 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 # Exploratory Data Analysis
 
-In this study, we consider both playtime and peak concurrent users to reflect a game's popularity. Let's first look at the distribution of these games.
+In our exploratory data analysis, we want to understand what factors drive game popularity on Steam. We begin by exploring the distribution of the key outcome variable: `peak_ccu` (peak_concurrent users) along with their relationships to potential predictors such as playtime, price, release year, estimated owners, and genre/category information. In details, we are aiming to: 
 
-## Popularity Distributions
+- Identify general patterns in popularity 
 
-```{r}
-apt_distribution = steam_df |> 
-  ggplot(aes(x = average_playtime)) +
-  geom_histogram(bins = 50, fill = "#66c0f4") +
-  scale_x_continuous(trans = "log10") +
-  labs(
-    title = "Distribution of Average Playtime (Log Scale)",
-    x = "Average playtime (minutes)"
-  )
+- Assess data quality and transformations needed for modeling
 
-ggplotly(apt_distribution)
-```
+- Detect early signals of which features might influence engagement
+
+## Distribution of Peak Concurrent Users
 
 ```{r}
 pccu_distribution = steam_df |>
@@ -170,109 +163,128 @@ pccu_distribution = steam_df |>
 ggplotly(pccu_distribution)
 ```
 
-Note that playtime and peak_ccu are both heavyly tailed (most games are barely played, and a few games dominate), so we apply a log transformation here to see a meaningful distribution and avoid outliers.
+Note that peak_ccu is heavily tailed. A tiny handful of games (like Counter-Strike 2, Dota 2, PUBG) have millions of CCU and owners, while the vast majority of games have very few owners and almost zero peak CCU. Applying log scales here allow us to compare games based on multiplicative differences rather than additive ones. For developers, the jump from 1,000 owners to 10,000 owners is just as significant as the jump from 100,000 to 1,000,000.
 
 ## Estimated Owners vs Popularity 
 
-Owners represent the overall reach of a game while peak_ccu reflects active use. Games with high owner counts but low CCU may indicate weak long-term engagement.
+Owners represent the overall reach of a game while peak_ccu reflects active use. Games with high owner counts but low CCU may indicate weak long-term engagement. The plot below visualizes the correlation between estimated owners and peak CCU.
+
 ```{r}
-eo_trend = steam_df |>
-  ggplot(aes(x = estimated_owners, y = peak_ccu)) +
-  geom_point(alpha = 0.3, color = "#66c0f4") +
-  scale_x_continuous(trans = "log10") +
+eo_boxplot = steam_df |>
+  ggplot(aes(x = factor(estimated_owners), y = peak_ccu)) +
+  geom_boxplot(fill = "#66c0f4", alpha = 0.6, color = "#66c0f4") +
   scale_y_continuous(trans = "log10") +
   labs(
-    title = "Estimated Owners vs Peak CCU",
-    x = "Estimated Owners",
-    y = "Peak CCU"
+    title = "Distribution of Peak CCU by Owner Tier",
+    x = "Estimated Owners Tier",
+    y = "Peak CCU (Log Scale)"
   )
 
-ggplotly(eo_trend)
+ggplotly(eo_boxplot)
 ```
 
-## Release Time Trends
+In the lower tiers (left side), the whiskers are long, and outliers are everywhere. Performance is unpredictable. In the highest tiers ($1e+07$), the boxes are tighter. Namely, If you have 10 million owners, your CCU is predictably massive. There are very few "dead" games with 10 million owners.
 
-```{r}
-rt_trend = steam_df |>
-  ggplot(aes(x = release_date, y = average_playtime)) +
-  geom_point(alpha = 0.3, color = "#66c0f4") +
-  geom_smooth(se = FALSE, color = "#e6e9f0") +
-  scale_y_continuous(trans = "log10") +
-  labs(
-    title = "Engagement Patterns by Release Year",
-    y = "Average playtime"
-  )
+## User Satisfaction vs Popularity
 
-ggplotly(rt_trend)
-```
-
-## Popularity by Genre
-
-Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 20 most played genres on Steam.
-
-```{r}
-genres_trend = steam_df|>
-  separate_rows(genres, sep = ",") |>
-  mutate(weight = estimated_owners) |>
-  group_by(genres) |>
-  summarize(
-    weighted_playtime = weighted.mean(average_playtime, w = weight, na.rm = TRUE),
-    total_owners = sum(estimated_owners, na.rm = TRUE),
-    n_games = n()
-  ) |>
-  arrange(desc(weighted_playtime)) |>
-  slice_head(n = 20) |>
-  ggplot(aes(x = reorder(genres, weighted_playtime), 
-             y = weighted_playtime)) +
-  geom_col(fill = "#66c0f4") +
-  coord_flip() +
-  labs(
-    title = "Top Genres by Weighted Average Playtime",
-    x = "Genre",
-    y = "Weighted Mean Playtime (minutes)"
-  )
-
-ggplotly(genres_trend)
-```
-
-## Review Ratio vs Popularity
-
-Reviews reflect user satisfaction. If higher satisfaction correlates with higher playtime, review sentiment becomes a strong candidate predictor.
+Reviews reflect user satisfaction. If higher satisfaction correlates with higher playtime, review sentiment becomes a strong candidate predictor. Here, we define satisfaction with Review Ratio:
+\[
+RR = \frac{Positive}{Positive + Negative} 
+\]
 
 ```{r}
 rr_trend = steam_df |>
-  mutate(review_ratio = positive / (positive + negative)) |>
-  ggplot(aes(x = review_ratio, y = average_playtime)) +
-  geom_point(alpha = 0.3, color = "#66c0f4") +
-  geom_smooth(se = FALSE, color = "#e6e9f0") +
-  scale_y_continuous(trans = "log10") +
+  mutate(
+    total_reviews = positive + negative,
+    review_ratio = positive / total_reviews
+  ) |>
+  filter(total_reviews > 50) |>
+  ggplot(aes(x = review_ratio, y = peak_ccu)) +
+  geom_point(alpha = 0.2, size = 0.8, color = "#66c0f4") +
+  geom_smooth(method = "gam", color = "#e6e9f0", se = FALSE) +
+  scale_y_log10(
+    labels = label_number(accuracy = 1, big.mark = ","),
+    breaks = trans_breaks("log10", function(x) 10^x)
+  ) +
+  scale_x_continuous(labels = scales::percent) +
   labs(
-    title = "Review Sentiment vs Playtime",
+    title = "Review Ratio vs Peak CCU",
     x = "Positive Review Ratio",
-    y = "Average playtime (log10)"
+    y = "Peak CCU"
   )
 
 ggplotly(rr_trend)
 ```
 
+The white trend line stays relatively flat for a long time and then curves upward sharply once the Review Ratio exceeds roughly 75%.
+This implies that moving from a "Bad" game (25%) to a "Mediocre" game (50%) yields very little gain in popularity. However, moving from "Good" (75%) to "Excellent" (95%+) yields an significant increase in peak players.
+
+## Popularity by Genre
+
+Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 15 most popular genres on Steam.
+
+```{r}
+genres_trend_plot = steam_df |>
+  separate_rows(genres, sep = ",\\s*") |>
+  filter(!genres %in% c("Free to Play", "Early Access")) |>
+  group_by(genres) |>
+  summarize(
+    total_ccu = sum(peak_ccu, na.rm = TRUE),
+    n_games = n()
+  ) |>
+  arrange(desc(total_ccu)) |>
+  slice_head(n = 15) |>
+  ggplot(aes(x = reorder(genres, total_ccu), 
+             y = total_ccu,
+             text = paste("Genre:", genres, 
+                          "<br>Total CCU:", scales::comma(total_ccu),
+                          "<br>Number of Games:", n_games))) +
+  geom_col(fill = "#66c0f4") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Top Genres by Total Peak CCU",
+    x = "Genre",
+    y = "Total Peak CCU"
+  )
+
+ggplotly(genres_trend_plot, tooltip = "text")
+```
+
+The plot above gives very intuitive results, and the 5 most popular genres are: Action, Adventure, RPG(Role Play), Indie, and Simulation. Clicking on each bar will show the number of games in that genre. For developers, a bigger market (more CCU) is almost certainly filled with more competitors. RPG is a very special genre with 6,329,228 peak CCU but only 2590 games, as the cost of making a RPG is usually expensive.
 
 ## Correlation
 
 Lastly, we use a correlation graph to check for potential predictors for our model.
 
 ```{r}
-correlation = steam_df |>
-  mutate(release_date = as.numeric(release_date)) |>
-  select(price, estimated_owners, release_date,
-         peak_ccu, average_playtime, median_playtime,
-         dlc_count, positive, negative) |>
+correlation_matrix = steam_df |>
+  mutate(
+    release_date = as.numeric(release_date),
+    total_reviews = positive + negative,
+    review_ratio = ifelse(total_reviews > 0, positive / total_reviews, 0),
+    log_peak_ccu = log1p(peak_ccu),
+    log_estimated_owners = log1p(estimated_owners),
+    log_price = log1p(price),
+    log_average_playtime = log1p(average_playtime)
+  ) |>
+  select(log_price, log_estimated_owners, release_date,
+         log_peak_ccu, log_average_playtime, median_playtime,
+         dlc_count, review_ratio) |>
   cor(use = "complete.obs") |>
-  ggcorrplot(lab = TRUE, ggtheme = steam_theme)
+  ggcorrplot(
+    lab = FALSE, 
+    hc.order = TRUE, 
+    ggtheme = steam_theme,
+    outline.color = "white",
+    colors = c("#6D9EC1", "white", "#E46726"))
 
-ggplotly(correlation)
+ggplotly(correlation_matrix)
 ```
 
-# Additional Analysis
+From the correlation matrix and other plots, we find `peak_ccu` and most variables are weak linearly. Therefore, instead of performing a Linear Regression, we use a Random Forest regressor to handle relationships and interactions.
+
+# Modeling
 
 
 
