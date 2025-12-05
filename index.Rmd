@@ -2,3 +2,19 @@
 title: "Steam Games Popularity Analysis"
 ---
 
+**Welcome to Our Project!**
+
+We are a team of data science students who love video games just as much as we love numbers.
+
+With The Game Awards (TGA) season officially kicking off and the hype building up for the big night on December 11th, we found ourselves asking: What actually makes a game popular? Is it the reviews? The price? Or something else entirely?
+
+Inspired by these questions, we decided to dive into the data. This project analyzes Steam gaming statistics to uncover the hidden trends behind the games we all play. We hope you enjoy exploring our findings!
+
+```{r, echo=FALSE, out.width="75%", fig.align="center"}
+knitr::include_graphics("data/game-of-the-year-all-portrait.webp")
+```
+
+<br>
+
+P.S.: You can cast your vote [here](https://thegameawards.com/nominees/game-of-the-year)! (Please vote for Silksong)
+

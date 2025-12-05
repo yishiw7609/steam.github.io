@@ -180,4 +180,4 @@ correlation_matrix = steam_df |>
 ggplotly(correlation_matrix)
 ```
 
-From the correlation matrix and other plots, we find `peak_ccu` and most variables are weak linearly. Therefore, for our additional analysis, instead of performing a Linear Regression, we use a Random Forest regressor to unveil relationships and interactions. Details of our Random Forest Model can be found [here](modeling.html)
+From the correlation matrix and other plots, we find `peak_ccu` and most variables are weak linearly. Therefore, for our additional analysis, instead of performing a Linear Regression, we use a Random Forest regressor to unveil relationships and interactions. Details of our Random Forest Model can be found [here](modeling.html).
