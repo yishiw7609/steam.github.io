@@ -1,5 +1,139 @@
 ---
 title: "Modeling"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  dev.args = list(bg = "transparent"),
+  comment = NA
+  )
+```
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(lubridate)
+library(ggcorrplot)
+library(plotly)
+library(scales)
+library(randomForest)
+library(caTools)
+
+steam_theme = theme_classic() + 
+  theme(
+    panel.background = element_rect(fill = "transparent", color = NA), 
+    plot.background = element_rect(fill = "transparent", color = NA),
+    legend.background = element_rect(fill = "transparent", color = NA),
+    legend.box.background = element_rect(fill = "transparent", color = NA),
+    text = element_text(color = "#66c0f4")
+    )
+
+theme_set(steam_theme)
+steam_df = read_csv("data/clean_steam_games.csv")
+```
+
+# Random Forest
+
+## Modeling Strategy
+
+This additional analysis aims to predict the maximum concurrent player count (`peak_ccu`) for Steam games based on current metadata. By modeling the relationship between game attributes—such as price, genre, and release timing—and player traffic, we can identify the key drivers of a game's commercial performance.
+
+We selected a Random Forest as our modeling algorithm. This decision was made by the some characteristics of the Steam dataset observed during [Exploratory Data Analysis](eda.html):
+
+- **Weak Linearity**: Our correlation matrix revealed that relationships between variables are barely linear. Random Forest captures complex, non-linear interactions without requiring manual equation fitting.
+
+- **Robustness to Outliers**: Steam data has a skewed distribution, where a few massive hits coexist with thousands of small games. Random Forest averages the results of multiple decision trees, preventing these extreme outliers from messing up the entire model.
+
+## Data Preparation
+
+To address the extreme skewness of the data, we perform a log1p transformation ($y = \ln(x + 1)$) to `peak_ccu` and continuous features. This transformation, as we previously mentioned, allows the model to learn magnitudes.
+
+```{r}
+model_data = steam_df |>
+  mutate(
+    log_peak_ccu = log1p(peak_ccu),
+    log_price = log1p(price),
+    release_date = as.numeric(release_date),
+    total_reviews = positive + negative,
+    review_ratio = ifelse(total_reviews > 0, positive / total_reviews, 0),
+    log_estimated_owners = log1p(estimated_owners),
+    log_average_playtime = log1p(average_playtime)
+  ) |>
+  select(log_peak_ccu, log_price, log_estimated_owners, log_average_playtime, dlc_count, primary_genre, release_date, review_ratio) |>
+  na.omit()
+```
+
+## Training Regressoor
+
+We first set a seed to make sure our work is reproducible. The dataset was then split into training (80% of original data) and testing (20% of original data) sets. Finally, we start training our Random Forest regressor with 500 decision trees and save this model as `rf_model`. The details of `rf_model` is given below.
+```{r}
+set.seed(8105)
+
+split = sample.split(model_data$log_peak_ccu, SplitRatio = 0.8)
+train_set = subset(model_data, split == TRUE)
+test_set = subset(model_data, split == FALSE)
+
+rf_model = randomForest(log_peak_ccu ~ ., 
+                         data = train_set, 
+                         ntree = 500, 
+                         importance = TRUE)
+
+print(rf_model)
+```
+
+## Evaluation
+
+```{r}
+log_predictions = predict(rf_model, newdata = test_set)
+real_predictions = expm1(log_predictions)
+real_actuals = expm1(test_set$log_peak_ccu)
+
+rmse = sqrt(mean((real_predictions - real_actuals)^2))
+print(paste("Root Mean Squared Error (in players):", round(rmse, 4)))
+
+nrmse_mean <- rmse / mean(real_actuals)
+print(paste("Normalized RMSE (Mean):", round(nrmse_mean, 4)))
+```
+
+We first generate the log-scale predictions. Then we reverse our log transformation with exponential equation to get the RMSE (Root Mean Squared Error) in actual player units. Additionally, we apply normalization to our RMSE to get NRMSE, where:
+\[
+NRMSE = \frac{RMSE}{Mean}
+\]
+
+NRMSE tells us the error percentage relative to the average game. The final model achieved a RMSE of 123 and a Normalized RMSE of 2.6. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+
+# Result & Discussion
+
+## Findings
+From the Variable Importance Plot of our model below, there are several findings:
+
+```{r}
+imp_dat <- as.data.frame(importance(rf_model))
+imp_dat$var_name <- rownames(imp_dat)
+
+ggplot(imp_dat, aes(x = IncNodePurity, y = reorder(var_name, IncNodePurity))) +
+  geom_point(color = "#66c0f4", size = 3) +
+  geom_segment(aes(x = 0, xend = IncNodePurity, y = var_name, yend = var_name),
+               color = "#66c0f4") + 
+  labs(title = "What drives Peak CCU?",
+       x = "Importance (IncNodePurity)",
+       y = "Variable Name")
+```
+
+- **Fans of Recency (`release_date`)**: The most significant predictor of peak_ccu was the release date. This indicates a strong "recency bias" in the Steam marketplace: people prefer new stuff. Newer games benefit from the "hype cycle" and marketing pushes, while older titles—regardless of quality—tend to see significant player churn. The model successfully learned the lifecycle decay of a typical video game.
+
+- **Buyers are Players (`estimated_owners`)**: The number of estimated owners served as a strong secondary predictor. However, this result may come from the logical constraint that people can only play a game when they own it.
+
+- **The Role of Content (`primary_genre`)**: Surprisingly, primary_genre showed lower predictive power compared to other factors. This result suggests that while genre defines the type of player, it does not strictly dictate the volume of players. This may also reflect a limitation in our feature engineering: by isolating only the primary genre, the model may miss the nuances of multi-genre titles.
+
+## Conclusion
+
+Our model validates that timing and reach (release window and ownership) are statistically more significant predictors of peak traffic than price or broad genre classifications. The fact that these two predictors shows in top is very surprising, as none of the team members expected or proposed such outcome. Future iterations of this study could improve accuracy by incorporating granular tag analysis (e.g., "Co-op", "PvP") to better capture the retention mechanics of specific game loops.

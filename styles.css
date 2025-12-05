@@ -112,3 +112,28 @@ table.table > tbody > tr:hover {
   text-shadow: 0 0 6px rgba(102,192,244,0.8);
 }
 
+
+pre {
+  background-color: rgba(15, 24, 38, 0.95) !important;
+  color: #e6e9f0 !important;
+  border: 1px solid #1b3b52 !important;
+  border-radius: 6px !important;
+  padding: 10px;
+}
+
+pre code {
+  background-color: transparent !important;
+  color: inherit !important; 
+  border: none !important;
+}
+
+.btn-default {
+  background-color: #0b1a2b !important;
+  color: #66c0f4 !important;
+  border: 1px solid #1b3b52 !important;
+}
+
+.btn-default:hover {
+  background-color: #13233a !important;
+  color: #a4d7ff !important;
+}

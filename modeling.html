@@ -29,7 +29,11 @@
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/font-awesome-6.5.2/css/all.min.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet" />
 
@@ -44,6 +48,121 @@
 
 
 
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #232629;
+    color: #7a7c7d;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #7a7c7d;  padding-left: 4px; }
+div.sourceCode
+  { color: #cfcfc2; background-color: #232629; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #cfcfc2; } /* Normal */
+code span.al { color: #95da4c; background-color: #4d1f24; font-weight: bold; } /* Alert */
+code span.an { color: #3f8058; } /* Annotation */
+code span.at { color: #2980b9; } /* Attribute */
+code span.bn { color: #f67400; } /* BaseN */
+code span.bu { color: #7f8c8d; } /* BuiltIn */
+code span.cf { color: #fdbc4b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #3daee9; } /* Char */
+code span.cn { color: #27aeae; font-weight: bold; } /* Constant */
+code span.co { color: #7a7c7d; } /* Comment */
+code span.cv { color: #7f8c8d; } /* CommentVar */
+code span.do { color: #a43340; } /* Documentation */
+code span.dt { color: #2980b9; } /* DataType */
+code span.dv { color: #f67400; } /* DecVal */
+code span.er { color: #da4453; text-decoration: underline; } /* Error */
+code span.ex { color: #0099ff; font-weight: bold; } /* Extension */
+code span.fl { color: #f67400; } /* Float */
+code span.fu { color: #8e44ad; } /* Function */
+code span.im { color: #27ae60; } /* Import */
+code span.in { color: #c45b00; } /* Information */
+code span.kw { color: #cfcfc2; font-weight: bold; } /* Keyword */
+code span.op { color: #cfcfc2; } /* Operator */
+code span.ot { color: #27ae60; } /* Other */
+code span.pp { color: #27ae60; } /* Preprocessor */
+code span.re { color: #2980b9; background-color: #153042; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #da4453; } /* SpecialString */
+code span.st { color: #f44f4f; } /* String */
+code span.va { color: #27aeae; } /* Variable */
+code span.vs { color: #da4453; } /* VerbatimString */
+code span.wa { color: #da4453; } /* Warning */
+
+.sourceCode .row {
+  width: 100%;
+}
+.sourceCode {
+  overflow-x: auto;
+}
+.code-folding-btn {
+  margin-right: -30px;
+}
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -207,7 +326,73 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
 
 
 
@@ -217,6 +402,16 @@ $(document).ready(function () {
 
 
 <div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -285,6 +480,14 @@ $(document).ready(function () {
 
 <div id="header">
 
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">Modeling</h1>
@@ -292,10 +495,180 @@ $(document).ready(function () {
 </div>
 
 
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(ggcorrplot)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">library</span>(plotly)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">library</span>(scales)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">library</span>(randomForest)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">library</span>(caTools)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>steam_theme <span class="ot">=</span> <span class="fu">theme_classic</span>() <span class="sc">+</span> </span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>    <span class="at">panel.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">&quot;transparent&quot;</span>, <span class="at">color =</span> <span class="cn">NA</span>), </span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">&quot;transparent&quot;</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>    <span class="at">legend.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">&quot;transparent&quot;</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>    <span class="at">legend.box.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">&quot;transparent&quot;</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>    )</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="fu">theme_set</span>(steam_theme)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>steam_df <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/clean_steam_games.csv&quot;</span>)</span></code></pre></div>
+<div id="random-forest" class="section level1">
+<h1>Random Forest</h1>
+<div id="modeling-strategy" class="section level2">
+<h2>Modeling Strategy</h2>
+<p>This additional analysis aims to predict the maximum concurrent
+player count (<code>peak_ccu</code>) for Steam games based on current
+metadata. By modeling the relationship between game attributes—such as
+price, genre, and release timing—and player traffic, we can identify the
+key drivers of a game’s commercial performance.</p>
+<p>We selected a Random Forest as our modeling algorithm. This decision
+was made by the some characteristics of the Steam dataset observed
+during <a href="eda.html">Exploratory Data Analysis</a>:</p>
+<ul>
+<li><p><strong>Weak Linearity</strong>: Our correlation matrix revealed
+that relationships between variables are barely linear. Random Forest
+captures complex, non-linear interactions without requiring manual
+equation fitting.</p></li>
+<li><p><strong>Robustness to Outliers</strong>: Steam data has a skewed
+distribution, where a few massive hits coexist with thousands of small
+games. Random Forest averages the results of multiple decision trees,
+preventing these extreme outliers from messing up the entire
+model.</p></li>
+</ul>
+</div>
+<div id="data-preparation" class="section level2">
+<h2>Data Preparation</h2>
+<p>To address the extreme skewness of the data, we perform a log1p
+transformation (<span class="math inline">\(y = \ln(x + 1)\)</span>) to
+<code>peak_ccu</code> and continuous features. This transformation, as
+we previously mentioned, allows the model to learn magnitudes.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>model_data <span class="ot">=</span> steam_df <span class="sc">|&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>    <span class="at">log_peak_ccu =</span> <span class="fu">log1p</span>(peak_ccu),</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>    <span class="at">log_price =</span> <span class="fu">log1p</span>(price),</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="at">release_date =</span> <span class="fu">as.numeric</span>(release_date),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="at">total_reviews =</span> positive <span class="sc">+</span> negative,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="at">review_ratio =</span> <span class="fu">ifelse</span>(total_reviews <span class="sc">&gt;</span> <span class="dv">0</span>, positive <span class="sc">/</span> total_reviews, <span class="dv">0</span>),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    <span class="at">log_estimated_owners =</span> <span class="fu">log1p</span>(estimated_owners),</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    <span class="at">log_average_playtime =</span> <span class="fu">log1p</span>(average_playtime)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="fu">select</span>(log_peak_ccu, log_price, log_estimated_owners, log_average_playtime, dlc_count, primary_genre, release_date, review_ratio) <span class="sc">|&gt;</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="fu">na.omit</span>()</span></code></pre></div>
+</div>
+<div id="training-regressoor" class="section level2">
+<h2>Training Regressoor</h2>
+<p>We first set a seed to make sure our work is reproducible. The
+dataset was then split into training (80% of original data) and testing
+(20% of original data) sets. Finally, we start training our Random
+Forest regressor with 500 decision trees and save this model as
+<code>rf_model</code>. The details of <code>rf_model</code> is given
+below.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">8105</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>split <span class="ot">=</span> <span class="fu">sample.split</span>(model_data<span class="sc">$</span>log_peak_ccu, <span class="at">SplitRatio =</span> <span class="fl">0.8</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>train_set <span class="ot">=</span> <span class="fu">subset</span>(model_data, split <span class="sc">==</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>test_set <span class="ot">=</span> <span class="fu">subset</span>(model_data, split <span class="sc">==</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>rf_model <span class="ot">=</span> <span class="fu">randomForest</span>(log_peak_ccu <span class="sc">~</span> ., </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>                         <span class="at">data =</span> train_set, </span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>                         <span class="at">ntree =</span> <span class="dv">500</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                         <span class="at">importance =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">print</span>(rf_model)</span></code></pre></div>
+<pre><code>
+Call:
+ randomForest(formula = log_peak_ccu ~ ., data = train_set, ntree = 500,      importance = TRUE) 
+               Type of random forest: regression
+                     Number of trees: 500
+No. of variables tried at each split: 2
+
+          Mean of squared residuals: 1.264432
+                    % Var explained: 78.02</code></pre>
+</div>
+<div id="evaluation" class="section level2">
+<h2>Evaluation</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>log_predictions <span class="ot">=</span> <span class="fu">predict</span>(rf_model, <span class="at">newdata =</span> test_set)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>real_predictions <span class="ot">=</span> <span class="fu">expm1</span>(log_predictions)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>real_actuals <span class="ot">=</span> <span class="fu">expm1</span>(test_set<span class="sc">$</span>log_peak_ccu)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>rmse <span class="ot">=</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((real_predictions <span class="sc">-</span> real_actuals)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">&quot;Root Mean Squared Error (in players):&quot;</span>, <span class="fu">round</span>(rmse, <span class="dv">4</span>)))</span></code></pre></div>
+<pre><code>[1] &quot;Root Mean Squared Error (in players): 123.416&quot;</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>nrmse_mean <span class="ot">&lt;-</span> rmse <span class="sc">/</span> <span class="fu">mean</span>(real_actuals)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">&quot;Normalized RMSE (Mean):&quot;</span>, <span class="fu">round</span>(nrmse_mean, <span class="dv">4</span>)))</span></code></pre></div>
+<pre><code>[1] &quot;Normalized RMSE (Mean): 2.59&quot;</code></pre>
+<p>We first generate the log-scale predictions. Then we reverse our log
+transformation with exponential equation to get the RMSE (Root Mean
+Squared Error) in actual player units. Additionally, we apply
+normalization to our RMSE to get NRMSE, where: <span
+class="math display">\[
+NRMSE = \frac{RMSE}{Mean}
+\]</span></p>
+<p>NRMSE tells us the error percentage relative to the average game. The
+final model achieved a RMSE of 123 and a Normalized RMSE of 2.6.
+Considering the large variance of the dataset, our model holds a fairly
+stable predictive capability.</p>
+</div>
+</div>
+<div id="result-discussion" class="section level1">
+<h1>Result &amp; Discussion</h1>
+<div id="findings" class="section level2">
+<h2>Findings</h2>
+<p>From the Variable Importance Plot of our model below, there are
+several findings:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>imp_dat <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">importance</span>(rf_model))</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>imp_dat<span class="sc">$</span>var_name <span class="ot">&lt;-</span> <span class="fu">rownames</span>(imp_dat)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">ggplot</span>(imp_dat, <span class="fu">aes</span>(<span class="at">x =</span> IncNodePurity, <span class="at">y =</span> <span class="fu">reorder</span>(var_name, IncNodePurity))) <span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">0</span>, <span class="at">xend =</span> IncNodePurity, <span class="at">y =</span> var_name, <span class="at">yend =</span> var_name),</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>) <span class="sc">+</span> </span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;What drives Peak CCU?&quot;</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Importance (IncNodePurity)&quot;</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Variable Name&quot;</span>)</span></code></pre></div>
+<p><img src="modeling_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<ul>
+<li><p><strong>Fans of Recency (<code>release_date</code>)</strong>: The
+most significant predictor of peak_ccu was the release date. This
+indicates a strong “recency bias” in the Steam marketplace: people
+prefer new stuff. Newer games benefit from the “hype cycle” and
+marketing pushes, while older titles—regardless of quality—tend to see
+significant player churn. The model successfully learned the lifecycle
+decay of a typical video game.</p></li>
+<li><p><strong>Buyers are Players
+(<code>estimated_owners</code>)</strong>: The number of estimated owners
+served as a strong secondary predictor. However, this result may come
+from the logical constraint that people can only play a game when they
+own it.</p></li>
+<li><p><strong>The Role of Content
+(<code>primary_genre</code>)</strong>: Surprisingly, primary_genre
+showed lower predictive power compared to other factors. This result
+suggests that while genre defines the type of player, it does not
+strictly dictate the volume of players. This may also reflect a
+limitation in our feature engineering: by isolating only the primary
+genre, the model may miss the nuances of multi-genre titles.</p></li>
+</ul>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Our model validates that timing and reach (release window and
+ownership) are statistically more significant predictors of peak traffic
+than price or broad genre classifications. The fact that these two
+predictors shows in top is very surprising, as none of the team members
+expected or proposed such outcome. Future iterations of this study could
+improve accuracy by incorporating granular tag analysis (e.g., “Co-op”,
+“PvP”) to better capture the retention mechanics of specific game
+loops.</p>
+</div>
+</div>
 
 
 
-
+</div>
+</div>
 
 </div>
 
@@ -327,7 +700,41 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

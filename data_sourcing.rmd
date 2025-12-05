@@ -51,6 +51,8 @@ During the cleaning process, our pipeline aims to:
 
 - Convert the `estimated_owners` from a range to a numeric value by taking the midpoint
 
+- Create a `primary_genre` variable. This will be the first string in list `genres`
+
 - Make sure no zeros or NAs are present in `average_playtime`, `median_playtime` and `peak_ccu` as they are meaningless in these columns
 
 ```{r}
@@ -66,7 +68,8 @@ steam_df = read_csv("data/steam_games.csv") |>
     dlc_count = as.numeric(dlc_count),
     positive = as.numeric(positive),
     negative = as.numeric(negative),
-    release_date = mdy(release_date)
+    release_date = mdy(release_date),
+    primary_genre = as.factor(sub(",.*", "", genres)), 
   ) |>
   mutate(estimated_owners = str_extract(estimated_owners, "\\d+"),
          estimated_owners = as.numeric(estimated_owners)) |>
