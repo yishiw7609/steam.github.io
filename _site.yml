@@ -3,8 +3,8 @@ output_dir: "."
 navbar:
   title: "Home"
   left:
-    - text: "About"
-      href: about.html
+    - text: "Screen Cast (YouTube)"
+      href: screen_cast.html
   right:
     - text: "Data"
       href: data_sourcing.html
@@ -14,8 +14,6 @@ navbar:
       href: modeling.html
     - text: "Report"
       href: report.html
-    - text: "Screen Cast"
-      href: screen_cast.html
     - icon: fa-github fa-lg
       href: https://github.com/yishiw7609/steam.github.io
     - icon: fa-envelope fa-lg
