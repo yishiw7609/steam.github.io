@@ -83,6 +83,68 @@ ggplotly(eo_boxplot)
 
 In the lower tiers (left side), the whiskers are long, and outliers are everywhere. Performance is unpredictable. In the highest tiers ($1e+07$), the boxes are tighter. Namely, If you have 10 million owners, your CCU is predictably massive. There are very few "dead" games with 10 million owners.
 
+# Free vs Paid Games
+
+Free-to-play titles often follow different business models than paid games.Free-to-play games often mean a larger player base and higher expectations for popularity fluctuations, do free-to-play games have a higher CCU than paid games? Here we compare the distribution of popularity between free and paid games.
+
+```{r,message=FALSE, warning=FALSE}
+steam_free_paid = steam_df |>
+  mutate(
+    free_flag = if_else(price == 0, "Free", "Paid")
+  )
+free_paid_plot = steam_free_paid |>
+  ggplot(aes(x = free_flag, y = peak_ccu)) +
+  geom_boxplot(fill = "#66c0f4", alpha = 0.6, color = "#66c0f4") +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Free vs Paid Games Peak CCU ",
+    x = "",
+    y = "Peak CCU (log scale)"
+  )
+
+ggplotly(free_paid_plot)
+```
+
+The median peak CCU is similar for both free-to-play and paid games, indicating that there is no fundamental difference in popularity between typical free-to-play games and typical paid games.However, Free-to-play games have higher dispersion and more hit games. The longer upper bounds and more extreme outliers show that most of the most popular games on Steam (such as PUBG, CS2, and Apex Legends) are free-to-play. Paid games are more concentrated. Paid games can also be very popular, but their overall distribution is more compact, with less fluctuation in popularity
+
+# Price Range and Game Popularity
+
+Based on the above analysis, we further divide the price of paid games into different ranges to observe the median CCU at different price levels.
+
+```{r ,message=FALSE, warning=FALSE}
+steam_price_level <- steam_df |>
+  mutate(
+    price_level = case_when(
+      price <= 4.99 ~ "$0.99–4.99",
+      price <= 9.99 ~ "$5–9.99",
+      price <= 19.99 ~ "$10–19.99",
+      price <= 39.99 ~ "$20–39.99",
+      price <= 59.99 ~ "$40–59.99",
+      TRUE ~ "$60+"
+    )
+  )
+
+price_median_plot <- steam_price_level |>
+  group_by(price_level) |>
+  summarize(
+    median_ccu = median(peak_ccu),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = reorder(price_level, median_ccu), y = median_ccu)) +
+  geom_col(fill = "#66c0f4", alpha = 0.8) +
+  coord_flip() +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Median Peak CCU by Price Range",
+    x = "Price Range",
+    y = "Median Peak CCU (log scale)"
+  )
+
+ggplotly(price_median_plot)
+```
+
+We can see that the more expensive the game, the higher the median Peak CCU.This phenomenon isn't because players prefer expensive games, but rather because higher prices usually represent large-scale productions . These games are more competitive in terms of marketing and production quality, thus attracting more players. Conversely, games priced below $10 are typically indie games with a smaller target audience and limited market exposure, resulting in a naturally lower median popularity.
+
 # User Satisfaction vs Popularity
 
 Reviews reflect user satisfaction. If higher satisfaction correlates with higher playtime, review sentiment becomes a strong candidate predictor. Here, we define satisfaction with Review Ratio:
@@ -150,6 +212,54 @@ ggplotly(genres_trend_plot, tooltip = "text")
 ```
 
 The plot above gives very intuitive results, and the 5 most popular genres are: Action, Adventure, RPG(Role Play), Indie, and Simulation. Clicking on each bar will show the number of games in that genre. For developers, a bigger market (more CCU) is almost certainly filled with more competitors. RPG is a very special genre with 6,329,228 peak CCU but only 2590 games, as the cost of making a RPG is usually expensive.
+
+# Developer Output and Productivity
+
+Steam developers vary widely in scale, some studios release dozens of games, while others release only one. Here we examine:
+1. Which developers publish the most games  
+2. Which developers achieve the highest typical popularity 
+
+```{r, message=FALSE, warning=FALSE}
+
+dev_df <- steam_df |>
+  separate_rows(developers, sep = ",\\s*")
+
+dev_count_plot <- dev_df |>
+  count(developers) |>
+  arrange(desc(n)) |>
+  slice_head(n = 15) |>
+  ggplot(aes(x = reorder(developers, n), y = n)) +
+  geom_col(fill = "#66c0f4") +
+  coord_flip() +
+  labs(
+    title = "Top 15 Developers by Number of Games Published",
+    x = "Developer",
+    y = "Number of Games"
+  )
+
+ggplotly(dev_count_plot)
+
+dev_quality_plot <- dev_df |>
+  group_by(developers) |>
+  summarize(
+    n_games = n(),
+    median_ccu = median(peak_ccu)
+  ) |>
+  filter(n_games >= 5) |>  
+  arrange(desc(median_ccu)) |>
+  slice_head(n = 15) |>
+  ggplot(aes(x = reorder(developers, median_ccu), y = median_ccu)) +
+  geom_col(fill = "#66c0f4") +
+  coord_flip() +
+  scale_y_continuous(trans = "log10") +
+  labs(
+    title = "Top Developers by Median Peak CCU ",
+    x = "Developer",
+    y = "Median Peak CCU (log scale)"
+  )
+
+ggplotly(dev_quality_plot)
+```
 
 # Correlation
 
