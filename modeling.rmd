@@ -73,13 +73,15 @@ model_data = steam_df |>
 
 ## Training Regressoor
 
-We first set a seed to make sure our work is reproducible. The dataset was then split into training (80% of original data) and testing (20% of original data) sets. Finally, we start training our Random Forest regressor with 500 decision trees and save this model as `rf_model`. The details of `rf_model` is given below.
+We first set a seed to make sure our work is reproducible. The dataset was then split into training (80% of original data) and testing (20% of original data) sets. We then generated a basic model with only individual variables as a control group. Finally, we start training our Random Forest regressor with 500 decision trees and save this model as `rf_model`. The details of basic model and `rf_model` is given below.
 ```{r}
 set.seed(8105)
 
 split = sample.split(model_data$log_peak_ccu, SplitRatio = 0.8)
 train_set = subset(model_data, split == TRUE)
 test_set = subset(model_data, split == FALSE)
+
+baseline_model <- lm(log_peak_ccu ~ ., data = train_set)
 
 rf_model = randomForest(log_peak_ccu ~ ., 
                          data = train_set, 
@@ -91,16 +93,34 @@ print(rf_model)
 
 ## Evaluation
 
+
 ```{r}
-log_predictions = predict(rf_model, newdata = test_set)
-real_predictions = expm1(log_predictions)
-real_actuals = expm1(test_set$log_peak_ccu)
+valid_genres <- unique(train_set$primary_genre)
+test_setnew <- test_set |>
+  dplyr::filter(primary_genre %in% valid_genres)
+log_pred_lm <- predict(baseline_model, newdata = test_setnew)
+log_pred_rf <- predict(rf_model,     newdata = test_setnew)
+real_actuals <- expm1(test_setnew$log_peak_ccu)
+pred_lm      <- expm1(log_pred_lm)
+pred_rf      <- expm1(log_pred_rf)
 
-rmse = sqrt(mean((real_predictions - real_actuals)^2))
-print(paste("Root Mean Squared Error (in players):", round(rmse, 4)))
+rmse_fun <- function(pred, obs) {
+  sqrt(mean((pred - obs)^2))
+}
 
-nrmse_mean <- rmse / mean(real_actuals)
-print(paste("Normalized RMSE (Mean):", round(nrmse_mean, 4)))
+lm_rmse <- rmse_fun(pred_lm, real_actuals)
+rf_rmse <- rmse_fun(pred_rf, real_actuals)
+
+lm_nrmse <- lm_rmse / mean(real_actuals)
+rf_nrmse <- rf_rmse / mean(real_actuals)
+
+results_table <- tibble::tibble(
+  Model = c("Linear Regression", "Random Forest"),
+  RMSE  = c(lm_rmse, rf_rmse),
+  NRMSE = c(lm_nrmse, rf_nrmse)
+)
+
+knitr::kable(results_table, digits = 4)
 ```
 
 We first generate the log-scale predictions. Then we reverse our log transformation with exponential equation to get the RMSE (Root Mean Squared Error) in actual player units. Additionally, we apply normalization to our RMSE to get NRMSE, where:
@@ -108,7 +128,7 @@ We first generate the log-scale predictions. Then we reverse our log transformat
 NRMSE = \frac{RMSE}{Mean}
 \]
 
-NRMSE tells us the error percentage relative to the average game. The final model achieved a RMSE of 123 and a Normalized RMSE of 2.6. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
 
 # Result & Discussion
 

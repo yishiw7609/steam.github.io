@@ -57,7 +57,6 @@
   }
 </style>
 <style type="text/css" data-origin="pandoc">
-html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -562,22 +561,25 @@ we previously mentioned, allows the model to learn magnitudes.</p>
 <h2>Training Regressoor</h2>
 <p>We first set a seed to make sure our work is reproducible. The
 dataset was then split into training (80% of original data) and testing
-(20% of original data) sets. Finally, we start training our Random
-Forest regressor with 500 decision trees and save this model as
-<code>rf_model</code>. The details of <code>rf_model</code> is given
-below.</p>
+(20% of original data) sets. We then generated a basic model with only
+individual variables as a control group. Finally, we start training our
+Random Forest regressor with 500 decision trees and save this model as
+<code>rf_model</code>. The details of basic model and
+<code>rf_model</code> is given below.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">8105</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>split <span class="ot">=</span> <span class="fu">sample.split</span>(model_data<span class="sc">$</span>log_peak_ccu, <span class="at">SplitRatio =</span> <span class="fl">0.8</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>train_set <span class="ot">=</span> <span class="fu">subset</span>(model_data, split <span class="sc">==</span> <span class="cn">TRUE</span>)</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>test_set <span class="ot">=</span> <span class="fu">subset</span>(model_data, split <span class="sc">==</span> <span class="cn">FALSE</span>)</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>rf_model <span class="ot">=</span> <span class="fu">randomForest</span>(log_peak_ccu <span class="sc">~</span> ., </span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>                         <span class="at">data =</span> train_set, </span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>                         <span class="at">ntree =</span> <span class="dv">500</span>, </span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                         <span class="at">importance =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">print</span>(rf_model)</span></code></pre></div>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>baseline_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(log_peak_ccu <span class="sc">~</span> ., <span class="at">data =</span> train_set)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>rf_model <span class="ot">=</span> <span class="fu">randomForest</span>(log_peak_ccu <span class="sc">~</span> ., </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>                         <span class="at">data =</span> train_set, </span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>                         <span class="at">ntree =</span> <span class="dv">500</span>, </span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>                         <span class="at">importance =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="fu">print</span>(rf_model)</span></code></pre></div>
 <pre><code>
 Call:
  randomForest(formula = log_peak_ccu ~ ., data = train_set, ntree = 500,      importance = TRUE) 
@@ -585,21 +587,58 @@ Call:
                      Number of trees: 500
 No. of variables tried at each split: 2
 
-          Mean of squared residuals: 1.264432
-                    % Var explained: 78.02</code></pre>
+          Mean of squared residuals: 1.267018
+                    % Var explained: 77.98</code></pre>
 </div>
 <div id="evaluation" class="section level2">
 <h2>Evaluation</h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>log_predictions <span class="ot">=</span> <span class="fu">predict</span>(rf_model, <span class="at">newdata =</span> test_set)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>real_predictions <span class="ot">=</span> <span class="fu">expm1</span>(log_predictions)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>real_actuals <span class="ot">=</span> <span class="fu">expm1</span>(test_set<span class="sc">$</span>log_peak_ccu)</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>rmse <span class="ot">=</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((real_predictions <span class="sc">-</span> real_actuals)<span class="sc">^</span><span class="dv">2</span>))</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">&quot;Root Mean Squared Error (in players):&quot;</span>, <span class="fu">round</span>(rmse, <span class="dv">4</span>)))</span></code></pre></div>
-<pre><code>[1] &quot;Root Mean Squared Error (in players): 123.416&quot;</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>nrmse_mean <span class="ot">&lt;-</span> rmse <span class="sc">/</span> <span class="fu">mean</span>(real_actuals)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">&quot;Normalized RMSE (Mean):&quot;</span>, <span class="fu">round</span>(nrmse_mean, <span class="dv">4</span>)))</span></code></pre></div>
-<pre><code>[1] &quot;Normalized RMSE (Mean): 2.59&quot;</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>valid_genres <span class="ot">&lt;-</span> <span class="fu">unique</span>(train_set<span class="sc">$</span>primary_genre)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>test_setnew <span class="ot">&lt;-</span> test_set <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(primary_genre <span class="sc">%in%</span> valid_genres)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>log_pred_lm <span class="ot">&lt;-</span> <span class="fu">predict</span>(baseline_model, <span class="at">newdata =</span> test_setnew)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>log_pred_rf <span class="ot">&lt;-</span> <span class="fu">predict</span>(rf_model,     <span class="at">newdata =</span> test_setnew)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>real_actuals <span class="ot">&lt;-</span> <span class="fu">expm1</span>(test_setnew<span class="sc">$</span>log_peak_ccu)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>pred_lm      <span class="ot">&lt;-</span> <span class="fu">expm1</span>(log_pred_lm)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>pred_rf      <span class="ot">&lt;-</span> <span class="fu">expm1</span>(log_pred_rf)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>rmse_fun <span class="ot">&lt;-</span> <span class="cf">function</span>(pred, obs) {</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  <span class="fu">sqrt</span>(<span class="fu">mean</span>((pred <span class="sc">-</span> obs)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>}</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>lm_rmse <span class="ot">&lt;-</span> <span class="fu">rmse_fun</span>(pred_lm, real_actuals)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>rf_rmse <span class="ot">&lt;-</span> <span class="fu">rmse_fun</span>(pred_rf, real_actuals)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>lm_nrmse <span class="ot">&lt;-</span> lm_rmse <span class="sc">/</span> <span class="fu">mean</span>(real_actuals)</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>rf_nrmse <span class="ot">&lt;-</span> rf_rmse <span class="sc">/</span> <span class="fu">mean</span>(real_actuals)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>results_table <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(<span class="st">&quot;Linear Regression&quot;</span>, <span class="st">&quot;Random Forest&quot;</span>),</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>  <span class="at">RMSE  =</span> <span class="fu">c</span>(lm_rmse, rf_rmse),</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>  <span class="at">NRMSE =</span> <span class="fu">c</span>(lm_nrmse, rf_nrmse)</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>)</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(results_table, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Model</th>
+<th align="right">RMSE</th>
+<th align="right">NRMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Linear Regression</td>
+<td align="right">142.4333</td>
+<td align="right">2.9885</td>
+</tr>
+<tr class="even">
+<td align="left">Random Forest</td>
+<td align="right">127.3825</td>
+<td align="right">2.6727</td>
+</tr>
+</tbody>
+</table>
 <p>We first generate the log-scale predictions. Then we reverse our log
 transformation with exponential equation to get the RMSE (Root Mean
 Squared Error) in actual player units. Additionally, we apply
@@ -608,9 +647,10 @@ class="math display">\[
 NRMSE = \frac{RMSE}{Mean}
 \]</span></p>
 <p>NRMSE tells us the error percentage relative to the average game. The
-final model achieved a RMSE of 123 and a Normalized RMSE of 2.6.
-Considering the large variance of the dataset, our model holds a fairly
-stable predictive capability.</p>
+baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model
+achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the
+large variance of the dataset, our model holds a fairly stable
+predictive capability.</p>
 </div>
 </div>
 <div id="result-discussion" class="section level1">
@@ -619,16 +659,16 @@ stable predictive capability.</p>
 <h2>Findings</h2>
 <p>From the Variable Importance Plot of our model below, there are
 several findings:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>imp_dat <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">importance</span>(rf_model))</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>imp_dat<span class="sc">$</span>var_name <span class="ot">&lt;-</span> <span class="fu">rownames</span>(imp_dat)</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="fu">ggplot</span>(imp_dat, <span class="fu">aes</span>(<span class="at">x =</span> IncNodePurity, <span class="at">y =</span> <span class="fu">reorder</span>(var_name, IncNodePurity))) <span class="sc">+</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">0</span>, <span class="at">xend =</span> IncNodePurity, <span class="at">y =</span> var_name, <span class="at">yend =</span> var_name),</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>) <span class="sc">+</span> </span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;What drives Peak CCU?&quot;</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Importance (IncNodePurity)&quot;</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Variable Name&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>imp_dat <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">importance</span>(rf_model))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>imp_dat<span class="sc">$</span>var_name <span class="ot">&lt;-</span> <span class="fu">rownames</span>(imp_dat)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">ggplot</span>(imp_dat, <span class="fu">aes</span>(<span class="at">x =</span> IncNodePurity, <span class="at">y =</span> <span class="fu">reorder</span>(var_name, IncNodePurity))) <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>, <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">0</span>, <span class="at">xend =</span> IncNodePurity, <span class="at">y =</span> var_name, <span class="at">yend =</span> var_name),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">&quot;#66c0f4&quot;</span>) <span class="sc">+</span> </span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;What drives Peak CCU?&quot;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">&quot;Importance (IncNodePurity)&quot;</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">&quot;Variable Name&quot;</span>)</span></code></pre></div>
 <p><img src="modeling_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 <ul>
 <li><p><strong>Fans of Recency (<code>release_date</code>)</strong>: The
