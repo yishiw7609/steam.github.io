@@ -22,6 +22,7 @@ library(tidyverse)
 library(knitr)
 library(lubridate)
 library(ggcorrplot)
+library(ggplot2)
 library(plotly)
 library(scales)
 library(randomForest)
@@ -180,9 +181,11 @@ ggplotly(pccu_distribution)
 
 Note that peak_ccu is heavily tailed. A tiny handful of games (like Counter-Strike 2, Dota 2, PUBG) have millions of CCU and owners, while the vast majority of games have very few owners and almost zero peak CCU. Applying log scales here allow us to compare games based on multiplicative differences rather than additive ones. For developers, the jump from 1,000 owners to 10,000 owners is just as significant as the jump from 100,000 to 1,000,000.
 
-## Estimated Owners vs Popularity 
+## Potential Predictors for Popularity
 
-Owners represent the overall reach of a game while peak_ccu reflects active use. Games with high owner counts but low CCU may indicate weak long-term engagement. The plot below visualizes the correlation between estimated owners and peak CCU.
+### Estimated Owners vs Popularity 
+
+Owners represent the overall reach of a game while peak_ccu reflects active use. The plot below visualizes the correlation between estimated owners and peak CCU.
 
 ```{r}
 eo_boxplot = steam_df |>
@@ -200,7 +203,36 @@ ggplotly(eo_boxplot)
 
 In the lower tiers (left side), the whiskers are long, and outliers are everywhere. Performance is unpredictable. In the highest tiers ($1e+07$), the boxes are tighter. Namely, If you have 10 million owners, your CCU is predictably massive. There are very few "dead" games with 10 million owners.
 
-# Free vs Paid Games
+### Playtime vs Popularity
+
+We also explore how average playtime relates to peak CCU.
+
+```{r}
+playtime_peak_plot = steam_df |>
+ggplot(aes(x = average_playtime, y = peak_ccu)) +
+geom_point(alpha = 0.2, size = 0.7, color = "#66c0f4") +
+scale_x_log10(
+labels = label_number(accuracy = 1, big.mark = ","),
+breaks = trans_breaks("log10", function(x) 10^x)
+) +
+scale_y_log10(
+labels = label_number(accuracy = 1, big.mark = ","),
+breaks = trans_breaks("log10", function(x) 10^x)
+) +
+labs(
+title = "Average Playtime vs Peak CCU",
+x = "Average Playtime (minutes, log scale)",
+y = "Peak CCU (log scale)"
+)
+
+ggplotly(playtime_peak_plot)
+
+```
+
+Similarly, our playtime–engagement analysis on a log–log scale indicates a clear positive association between average playtime and peak CCU. Games that keep players for many hours tend to reach higher peak concurrency, although there is substantial variation: some niche titles have modest peaks but very long sessions, while other games achieve high peaks with shorter average playtime.
+
+
+### Price vs Popularity 
 
 Free-to-play titles often follow different business models than paid games.Free-to-play games often mean a larger player base and higher expectations for popularity fluctuations, do free-to-play games have a higher CCU than paid games? Here we compare the distribution of popularity between free and paid games.
 
@@ -222,11 +254,7 @@ free_paid_plot = steam_free_paid |>
 ggplotly(free_paid_plot)
 ```
 
-The median peak CCU is similar for both free-to-play and paid games, indicating that there is no fundamental difference in popularity between typical free-to-play games and typical paid games.However, Free-to-play games have higher dispersion and more hit games. The longer upper bounds and more extreme outliers show that most of the most popular games on Steam (such as PUBG, CS2, and Apex Legends) are free-to-play. Paid games are more concentrated. Paid games can also be very popular, but their overall distribution is more compact, with less fluctuation in popularity
-
-# Price Range and Game Popularity
-
-Based on the above analysis, we further divide the price of paid games into different ranges to observe the median CCU at different price levels.
+The median peak CCU is similar for both free-to-play and paid games, indicating that there is no fundamental difference in popularity between typical free-to-play games and typical paid games. Based on the above analysis, we further divide the price of paid games into different ranges to observe the median CCU at different price levels.
 
 ```{r ,message=FALSE, warning=FALSE}
 steam_price_level <- steam_df |>
@@ -262,7 +290,7 @@ ggplotly(price_median_plot)
 
 We can see that the more expensive the game, the higher the median Peak CCU.This phenomenon isn't because players prefer expensive games, but rather because higher prices usually represent large-scale productions . These games are more competitive in terms of marketing and production quality, thus attracting more players. Conversely, games priced below $10 are typically indie games with a smaller target audience and limited market exposure, resulting in a naturally lower median popularity.
 
-## User Satisfaction vs Popularity
+### User Satisfaction vs Popularity
 
 Reviews reflect user satisfaction. If higher satisfaction correlates with higher playtime, review sentiment becomes a strong candidate predictor. Here, we define satisfaction with Review Ratio:
 \[
@@ -296,8 +324,9 @@ ggplotly(rr_trend)
 The white trend line stays relatively flat for a long time and then curves upward sharply once the Review Ratio exceeds roughly 75%.
 This implies that moving from a "Bad" game (25%) to a "Mediocre" game (50%) yields very little gain in popularity. However, moving from "Good" (75%) to "Excellent" (95%+) yields an significant increase in peak players.
 
+## Additional Factors
 
-## Popularity by Genre
+### Popularity by Genre
 
 Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 15 most popular genres on Steam.
 
@@ -331,55 +360,33 @@ ggplotly(genres_trend_plot, tooltip = "text")
 
 The plot above gives very intuitive results, and the 5 most popular genres are: Action, Adventure, RPG(Role Play), Indie, and Simulation. Clicking on each bar will show the number of games in that genre. For developers, a bigger market (more CCU) is almost certainly filled with more competitors. RPG is a very special genre with 6,329,228 peak CCU but only 2590 games, as the cost of making a RPG is usually expensive.
 
-# Developer Output and Productivity
+### Popularity by Developer
 
-Steam developers vary widely in scale, some studios release dozens of games, while others release only one. Here we examine:
-1. Which developers publish the most games  
-2. Which developers achieve the highest typical popularity 
+Here, we want to examine which developers achieve the highest popularity and user stickness:
 
-```{r, message=FALSE, warning=FALSE}
-
-dev_df <- steam_df |>
-  separate_rows(developers, sep = ",\\s*")
-
-dev_count_plot <- dev_df |>
-  count(developers) |>
-  arrange(desc(n)) |>
-  slice_head(n = 15) |>
-  ggplot(aes(x = reorder(developers, n), y = n)) +
-  geom_col(fill = "#66c0f4") +
-  coord_flip() +
-  labs(
-    title = "Top 15 Developers by Number of Games Published",
-    x = "Developer",
-    y = "Number of Games"
-  )
-
-ggplotly(dev_count_plot)
-
-dev_quality_plot <- dev_df |>
+```{r}
+dev_quality_plot = steam_df |>
+  separate_rows(developers, sep = ",\\s*") |>
   group_by(developers) |>
   summarize(
     n_games = n(),
     median_ccu = median(peak_ccu)
   ) |>
-  filter(n_games >= 5) |>  
   arrange(desc(median_ccu)) |>
   slice_head(n = 15) |>
-  ggplot(aes(x = reorder(developers, median_ccu), y = median_ccu)) +
+  ggplot(aes(y = reorder(developers, median_ccu), x = median_ccu)) +
   geom_col(fill = "#66c0f4") +
-  coord_flip() +
-  scale_y_continuous(trans = "log10") +
+  scale_x_log10(labels = scales::comma) +
   labs(
-    title = "Top Developers by Median Peak CCU ",
-    x = "Developer",
-    y = "Median Peak CCU (log scale)"
+    title = "Top 15 Developers by Peak CCU",
+    y = "Developer",
+    x = "Median Peak CCU (log scale)"
   )
 
 ggplotly(dev_quality_plot)
 ```
 
-Our developer analysis reveals a clear divide between quantity-driven and quality-driven production on Steam. Developers that publish the largest number of titles—many of which appear under generic labels such as “Inc.” or “Ltd.”—do not correspond to the creators of the most popular games. In contrast, studios with the highest median peak concurrency, such as Nixxes Software, Insomniac Games, and Respawn Entertainment, are well-established AAA teams whose success stems from high production value, strong IP franchises, and consistent player engagement. This contrast highlights that the number of games released is not a predictor of player popularity; instead, sustained quality and brand strength are what drive meaningful player traffic on the platform.
+We notice studios with the high median peak ccu are well-established AAA teams whose success stems from high production value, strong IP franchises, and consistent player engagement. This highlights that sustained quality and brand strength are what drive meaningful player traffic on the platform.
 
 ## Correlation
 
@@ -412,76 +419,8 @@ ggplotly(correlation_matrix)
 
 From the correlation matrix and other plots, we find `peak_ccu` and most variables are weak linearly. Therefore, for our additional analysis, instead of performing a Linear Regression, we use a Random Forest regressor to unveil relationships and interactions.
 
-In addition to these pairwise correlations, we also examined how popularity evolves across release years and how it relates to playtime. The release-year trend shows a U-shaped pattern in median peak CCU: early titles on Steam enjoy relatively high median popularity, which then declines as the catalog becomes more crowded, and rises again in recent years as the overall player base and large-scale multiplayer releases grow. 
 
-## Additional EDA: Popularity Trends by Release Year
-
-To understand how game popularity evolves over time, we examine how median peak CCU changes across release years.
-
-```{r}
-release_trend_plot <- steam_df |>
-mutate(
-release_year = lubridate::year(release_date)
-) |>
-filter(
-!is.na(release_year),
-release_year >= 2000
-) |>
-group_by(release_year) |>
-summarize(
-n_games = n(),
-median_peak_ccu = median(peak_ccu, na.rm = TRUE),
-.groups = "drop"
-) |>
-ggplot(aes(
-x = release_year,
-y = median_peak_ccu
-)) +
-geom_line(color = "#66c0f4") +
-geom_point(color = "#66c0f4") +
-scale_y_log10(labels = scales::comma) +
-scale_x_continuous(breaks = scales::pretty_breaks()) +
-labs(
-title = "Median Game Popularity by Release Year",
-x = "Release Year",
-y = "Median Peak CCU (log scale)"
-)
-
-ggplotly(release_trend_plot)
-
-```
-
-## Additional EDA: Playtime and Player Engagement
-
-We also explore how average playtime relates to peak CCU, using a log–log scale to highlight engagement patterns across games.
-
-
-```{r}
-playtime_peak_plot <- steam_df |>
-ggplot(aes(x = average_playtime, y = peak_ccu)) +
-geom_point(alpha = 0.2, size = 0.7, color = "#66c0f4") +
-scale_x_log10(
-labels = label_number(accuracy = 1, big.mark = ","),
-breaks = trans_breaks("log10", function(x) 10^x)
-) +
-scale_y_log10(
-labels = label_number(accuracy = 1, big.mark = ","),
-breaks = trans_breaks("log10", function(x) 10^x)
-) +
-labs(
-title = "Average Playtime vs Peak CCU",
-x = "Average Playtime (minutes, log scale)",
-y = "Peak CCU (log scale)"
-)
-
-ggplotly(playtime_peak_plot)
-
-```
-
-Similarly, our playtime–engagement analysis on a log–log scale indicates a clear positive association between average playtime and peak CCU. Games that keep players for many hours tend to reach higher peak concurrency, although there is substantial variation: some niche titles have modest peaks but very long sessions, while other games achieve high peaks with shorter average playtime. These temporal and engagement patterns support the decision to use flexible, non-linear models that can capture heterogeneous behaviors across different types of games.
-
-
-# Random Forest
+# Modeling
 
 ## Modeling Strategy
 
@@ -574,7 +513,7 @@ We first generate the log-scale predictions. Then we reverse our log transformat
 NRMSE = \frac{RMSE}{Mean}
 \]
 
-NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 122.21	 and a Normalized RMSE of 2.56. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
 
 ## Model Diagnostics: Predicted vs Actual Peak CCU
 
@@ -597,7 +536,7 @@ p_lm <- ggplot(diag_sample, aes(x = actual, y = pred_lm)) +
   geom_abline(
     slope = 1, intercept = 0,
     linetype = "dashed",
-    color = "#e6e9f0",  # 换成浅色
+    color = "#e6e9f0",
     linewidth = 0.5
   ) +
   scale_x_log10(labels = scales::comma) +
@@ -613,7 +552,7 @@ p_rf <- ggplot(diag_sample, aes(x = actual, y = pred_rf)) +
   geom_abline(
     slope = 1, intercept = 0,
     linetype = "dashed",
-    color = "#e6e9f0",  # 同样改成浅色
+    color = "#e6e9f0",
     linewidth = 0.5
   ) +
   scale_x_log10(labels = scales::comma) +
@@ -640,11 +579,9 @@ Beyond these summary metrics, we also compared predicted versus actual peak CCU 
 This diagnostic comparison is consistent with the RMSE and NRMSE results and provides visual evidence that the Random Forest is better suited to capturing complex relationships in the Steam dataset.
 
 
-# Result & Discussion
+# Discussion
 
-## Findings
-From the Variable Importance Plot of our model below, there are several findings:
-
+## Result
 ```{r}
 imp_dat <- as.data.frame(importance(rf_model))
 imp_dat$var_name <- rownames(imp_dat)
@@ -658,7 +595,49 @@ ggplot(imp_dat, aes(x = IncNodePurity, y = reorder(var_name, IncNodePurity))) +
        y = "Variable Name")
 ```
 
-- **Fans of Recency (`release_date`)**: The most significant predictor of peak_ccu was the release date. This indicates a strong "recency bias" in the Steam marketplace: people prefer new stuff. Newer games benefit from the "hype cycle" and marketing pushes, while older titles—regardless of quality—tend to see significant player churn. The model successfully learned the lifecycle decay of a typical video game.
+The most significant predictor of peak_ccu was the release date. To find how popularity evolves across release years and how it relates to playtime. We exclusively plot their correlation below.
+
+## Popularity Trends by Release Year
+
+```{r}
+release_trend_plot <- steam_df |>
+mutate(
+release_year = lubridate::year(release_date)
+) |>
+filter(
+!is.na(release_year),
+release_year >= 2000
+) |>
+group_by(release_year) |>
+summarize(
+n_games = n(),
+median_peak_ccu = median(peak_ccu, na.rm = TRUE),
+.groups = "drop"
+) |>
+ggplot(aes(
+x = release_year,
+y = median_peak_ccu
+)) +
+geom_line(color = "#66c0f4") +
+geom_point(color = "#66c0f4") +
+scale_y_log10(labels = scales::comma) +
+scale_x_continuous(breaks = scales::pretty_breaks()) +
+labs(
+title = "Median Game Popularity by Release Year",
+x = "Release Year",
+y = "Median Peak CCU (log scale)"
+)
+
+ggplotly(release_trend_plot)
+```
+
+The release-year trend shows a U-shaped pattern in median peak CCU: early titles on Steam enjoy relatively high median popularity, which then declines as the catalog becomes more crowded, and rises again in recent years as the overall player base and large-scale multiplayer releases grow.
+
+## Findings
+
+Below are our main findings from this study:
+
+- **Fans of Recency (`release_date`)**: This indicates a strong "recency bias" in the Steam marketplace: people prefer new stuff. Newer games benefit from the "hype cycle" and marketing pushes, while older titles—regardless of quality—tend to see significant player churn. The model successfully learned the lifecycle decay of a typical video game.
 
 - **Buyers are Players (`estimated_owners`)**: The number of estimated owners served as a strong secondary predictor. However, this result may come from the logical constraint that people can only play a game when they own it.
 

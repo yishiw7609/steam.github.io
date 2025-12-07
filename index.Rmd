@@ -10,7 +10,7 @@ With The Game Awards (TGA) season officially kicking off and the hype building u
 
 Inspired by these questions, we decided to dive into the data. This project analyzes Steam gaming statistics to uncover the hidden trends behind the games we all play. We hope you enjoy exploring our findings!
 
-Feel free to email us or visit our [Github page]("https://github.com/yishiw7609/steam.github.io") if you have any questions.
+Feel free to email us or visit our [Github page](https://github.com/yishiw7609/steam.github.io) if you have any questions.
 
 ```{r, echo=FALSE, out.width="75%", fig.align="center"}
 knitr::include_graphics("data/game-of-the-year-all-portrait.webp")

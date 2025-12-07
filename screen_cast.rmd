@@ -3,4 +3,12 @@ title: "Screen Cast"
 output: html_document
 ---
 
-Here is the [YouTube]( link) site for our screen cast.
+Here is the [YouTube](https://www.youtube.com/embed/Vwq2dLuk6Po) page for our screen cast.
+
+<iframe width="560" height="315" 
+        src="https://www.youtube.com/embed/Vwq2dLuk6Po" 
+        title="YouTube video player" 
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+</iframe>

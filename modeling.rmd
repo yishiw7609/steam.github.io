@@ -40,9 +40,8 @@ theme_set(steam_theme)
 steam_df = read_csv("data/clean_steam_games.csv")
 ```
 
-# Random Forest
 
-## Modeling Strategy
+# Modeling Strategy
 
 This additional analysis aims to predict the maximum concurrent player count (`peak_ccu`) for Steam games based on current metadata. By modeling the relationship between game attributes—such as price, genre, and release timing—and player traffic, we can identify the key drivers of a game's commercial performance.
 
@@ -52,7 +51,12 @@ We selected a Random Forest as our modeling algorithm. This decision was made by
 
 - **Robustness to Outliers**: Steam data has a skewed distribution, where a few massive hits coexist with thousands of small games. Random Forest averages the results of multiple decision trees, preventing these extreme outliers from messing up the entire model.
 
-## Data Preparation
+Before fitting the Random Forest, we added a baseline:
+Baseline Model : Linear Regression
+This model assumes a linear relationship between features and log(Peak CCU).
+It serves as a benchmark to quantify Random Forest’s non-linear improvement.
+
+# Data Preparation
 
 To address the extreme skewness of the data, we perform a log1p transformation ($y = \ln(x + 1)$) to `peak_ccu` and continuous features. This transformation, as we previously mentioned, allows the model to learn magnitudes.
 
@@ -71,7 +75,7 @@ model_data = steam_df |>
   na.omit()
 ```
 
-## Training Regressoor
+# Training Regressoor
 
 We first set a seed to make sure our work is reproducible. The dataset was then split into training (80% of original data) and testing (20% of original data) sets. We then generated a basic model with only individual variables as a control group. Finally, we start training our Random Forest regressor with 500 decision trees and save this model as `rf_model`. The details of basic model and `rf_model` is given below.
 ```{r}
@@ -91,7 +95,7 @@ rf_model = randomForest(log_peak_ccu ~ .,
 print(rf_model)
 ```
 
-## Evaluation
+# Evaluation
 
 
 ```{r}
@@ -128,72 +132,67 @@ We first generate the log-scale predictions. Then we reverse our log transformat
 NRMSE = \frac{RMSE}{Mean}
 \]
 
-NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 122.21	 and a Normalized RMSE of 2.56. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
 
-# Result & Discussion
+# Model Diagnostics: Predicted vs Actual Peak CCU
 
-## Model Diagnostics and Comparison
+To better compare the baseline linear model and the Random Forest, we visualize predicted versus actual peak CCU on a log–log scale for both models.
 
-While RMSE and NRMSE summarize overall error, it is also helpful to visualize how well each model tracks the actual player counts. 
-Below we compare predicted versus actual peak CCU on the test set for both the linear regression baseline and the Random Forest model.
 
-```{r prediction_comparison, message=FALSE, warning=FALSE}
-pred_df <- tibble::tibble(
-  actual_peak_ccu = real_actuals,
-  `Linear Regression` = pred_lm,
-  `Random Forest`     = pred_rf
-) |>
-  tidyr::pivot_longer(
-    cols = c(`Linear Regression`, `Random Forest`),
-    names_to = "Model",
-    values_to = "predicted_peak_ccu"
-  )
+```{r}
+diag_df <- tibble::tibble(
+  actual   = real_actuals,
+  pred_lm  = pred_lm,
+  pred_rf  = pred_rf
+)
 
-pred_scatter <- pred_df |>
-  ggplot(aes(x = actual_peak_ccu, y = predicted_peak_ccu, color = Model)) +
-  geom_point(alpha = 0.3, size = 0.8) +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+set.seed(8105)
+diag_sample <- diag_df |>
+  dplyr::sample_n(size = min(3000, nrow(diag_df)))
+
+p_lm <- ggplot(diag_sample, aes(x = actual, y = pred_lm)) +
+  geom_point(alpha = 0.3, size = 0.7, color = "#66c0f4") +
+  geom_abline(
+    slope = 1, intercept = 0,
+    linetype = "dashed",
+    color = "#e6e9f0",
+    linewidth = 0.5
+  ) +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma) +
   labs(
-    title = "Predicted vs Actual Peak CCU on Test Set",
+    title = "Predicted vs Actual Peak CCU (Linear Regression)",
     x = "Actual Peak CCU",
     y = "Predicted Peak CCU"
   )
 
-ggplotly(pred_scatter)
+p_rf <- ggplot(diag_sample, aes(x = actual, y = pred_rf)) +
+  geom_point(alpha = 0.3, size = 0.7, color = "#66c0f4") +
+  geom_abline(
+    slope = 1, intercept = 0,
+    linetype = "dashed",
+    color = "#e6e9f0",
+    linewidth = 0.5
+  ) +
+  scale_x_log10(labels = scales::comma) +
+  scale_y_log10(labels = scales::comma) +
+  labs(
+    title = "Predicted vs Actual Peak CCU (Random Forest)",
+    x = "Actual Peak CCU",
+    y = "Predicted Peak CCU"
+  )
+
+subplot(
+  ggplotly(p_lm),
+  ggplotly(p_rf),
+  nrows = 1,
+  margin = 0.05,
+  titleX = TRUE,
+  titleY = TRUE
+)
 
 ```
 
-On the log–log scale, the Random Forest predictions cluster more tightly around the 45-degree reference line than those from the linear regression model. 
-This indicates that the Random Forest captures the non-linear relationships between features and peak CCU more effectively, especially for games with very high or very low traffic.
+Beyond these summary metrics, we also compared predicted versus actual peak CCU on the test set for both models. On the log–log scale, the Random Forest predictions cluster more tightly around the 45-degree reference line than those from the linear regression, especially for games at the extremes of the popularity distribution. The linear model tends to underestimate the largest hits and overestimate some mid-range titles, whereas the Random Forest tracks these non-linear patterns more closely. 
 
-The linear model systematically underestimates some of the largest hits and overestimates a portion of mid-range titles, which is consistent with its higher RMSE and NRMSE. 
-Together, the numerical metrics and the diagnostic plot support our choice of Random Forest as the primary model for explaining and predicting Steam game popularity.
-
-
-## Findings
-From the Variable Importance Plot of our model below, there are several findings:
-
-```{r}
-imp_dat <- as.data.frame(importance(rf_model))
-imp_dat$var_name <- rownames(imp_dat)
-
-ggplot(imp_dat, aes(x = IncNodePurity, y = reorder(var_name, IncNodePurity))) +
-  geom_point(color = "#66c0f4", size = 3) +
-  geom_segment(aes(x = 0, xend = IncNodePurity, y = var_name, yend = var_name),
-               color = "#66c0f4") + 
-  labs(title = "What drives Peak CCU?",
-       x = "Importance (IncNodePurity)",
-       y = "Variable Name")
-```
-
-- **Fans of Recency (`release_date`)**: The most significant predictor of peak_ccu was the release date. This indicates a strong "recency bias" in the Steam marketplace: people prefer new stuff. Newer games benefit from the "hype cycle" and marketing pushes, while older titles—regardless of quality—tend to see significant player churn. The model successfully learned the lifecycle decay of a typical video game.
-
-- **Buyers are Players (`estimated_owners`)**: The number of estimated owners served as a strong secondary predictor. However, this result may come from the logical constraint that people can only play a game when they own it.
-
-- **The Role of Content (`primary_genre`)**: Surprisingly, primary_genre showed lower predictive power compared to other factors. This result suggests that while genre defines the type of player, it does not strictly dictate the volume of players. This may also reflect a limitation in our feature engineering: by isolating only the primary genre, the model may miss the nuances of multi-genre titles.
-
-## Conclusion
-
-Our model validates that timing and reach (release window and ownership) are statistically more significant predictors of peak traffic than price or broad genre classifications. The fact that these two predictors shows in top is very surprising, as none of the team members expected or proposed such outcome. Future iterations of this study could improve accuracy by incorporating granular tag analysis (e.g., "Co-op", "PvP") to better capture the retention mechanics of specific game loops.
+This diagnostic comparison is consistent with the RMSE and NRMSE results and provides visual evidence that the Random Forest is better suited to capturing complex relationships in the Steam dataset.
