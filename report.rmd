@@ -154,7 +154,48 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 # Exploratory Data Analysis
 
-In our exploratory data analysis, we want to understand what factors drive game popularity on Steam. We begin by exploring the distribution of the key outcome variable: `peak_ccu` (peak concurrent users) along with their relationships to potential predictors such as playtime, price, release year, estimated owners, and genre/category information. In particular, we examine not only cross-sectional patterns (e.g., owners, price, reviews), but also temporal trends and engagement-related quantities such as release year and average playtime.
+In our exploratory data analysis, we want to understand what factors drive game popularity on Steam. We begin by exploring the distribution of the key outcome variable: `peak_ccu` (peak concurrent users) along with their relationships to potential predictors such as playtime, price, release year, estimated owners, and genre/category information.
+
+
+## Additional EDA: Popularity Trends by Release Year
+
+To understand how game popularity evolves over time, we examine how median peak CCU changes across release years.
+
+```{r}
+release_trend_plot <- steam_df |>
+mutate(
+release_year = lubridate::year(release_date)
+) |>
+filter(
+!is.na(release_year),
+release_year >= 2000
+) |>
+group_by(release_year) |>
+summarize(
+n_games = n(),
+median_peak_ccu = median(peak_ccu, na.rm = TRUE),
+.groups = "drop"
+) |>
+ggplot(aes(
+x = release_year,
+y = median_peak_ccu
+)) +
+geom_line(color = "#66c0f4") +
+geom_point(color = "#66c0f4") +
+scale_y_log10(labels = scales::comma) +
+scale_x_continuous(breaks = scales::pretty_breaks()) +
+labs(
+title = "Median Game Popularity by Release Year",
+x = "Release Year",
+y = "Median Peak CCU (log scale)"
+)
+
+ggplotly(release_trend_plot)
+
+```
+
+
+In particular, we examine not only cross-sectional patterns (e.g., owners, price, reviews), but also temporal trends and engagement-related quantities such as release year and average playtime.
 
 Specifically, our EDA aims to:
 
@@ -414,6 +455,33 @@ From the correlation matrix and other plots, we find `peak_ccu` and most variabl
 
 In addition to these pairwise correlations, we also examined how popularity evolves across release years and how it relates to playtime. The release-year trend shows a U-shaped pattern in median peak CCU: early titles on Steam enjoy relatively high median popularity, which then declines as the catalog becomes more crowded, and rises again in recent years as the overall player base and large-scale multiplayer releases grow. 
 
+## Additional EDA: Playtime and Player Engagement
+
+We also explore how average playtime relates to peak CCU, using a log–log scale to highlight engagement patterns across games.
+
+
+```{r}
+playtime_peak_plot <- steam_df |>
+ggplot(aes(x = average_playtime, y = peak_ccu)) +
+geom_point(alpha = 0.2, size = 0.7, color = "#66c0f4") +
+scale_x_log10(
+labels = label_number(accuracy = 1, big.mark = ","),
+breaks = trans_breaks("log10", function(x) 10^x)
+) +
+scale_y_log10(
+labels = label_number(accuracy = 1, big.mark = ","),
+breaks = trans_breaks("log10", function(x) 10^x)
+) +
+labs(
+title = "Average Playtime vs Peak CCU",
+x = "Average Playtime (minutes, log scale)",
+y = "Peak CCU (log scale)"
+)
+
+ggplotly(playtime_peak_plot)
+
+```
+
 Similarly, our playtime–engagement analysis on a log–log scale indicates a clear positive association between average playtime and peak CCU. Games that keep players for many hours tend to reach higher peak concurrency, although there is substantial variation: some niche titles have modest peaks but very long sessions, while other games achieve high peaks with shorter average playtime. These temporal and engagement patterns support the decision to use flexible, non-linear models that can capture heterogeneous behaviors across different types of games.
 
 
@@ -511,6 +579,57 @@ NRMSE = \frac{RMSE}{Mean}
 \]
 
 NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+
+## Model Diagnostics: Predicted vs Actual Peak CCU
+
+To better compare the baseline linear model and the Random Forest, we visualize predicted versus actual peak CCU on a log–log scale for both models.
+
+
+```{r}
+diag_df <- tibble::tibble(
+actual   = real_actuals,
+pred_lm  = pred_lm,
+pred_rf  = pred_rf
+)
+
+set.seed(8105)
+diag_sample <- diag_df |>
+dplyr::sample_n(size = min(3000, nrow(diag_df)))
+
+
+p_lm <- ggplot(diag_sample, aes(x = actual, y = pred_lm)) +
+geom_point(alpha = 0.3, size = 0.7, color = "#66c0f4") +
+geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+scale_x_log10(labels = scales::comma) +
+scale_y_log10(labels = scales::comma) +
+labs(
+title = "Predicted vs Actual Peak CCU (Linear Regression)",
+x = "Actual Peak CCU",
+y = "Predicted Peak CCU"
+)
+
+
+p_rf <- ggplot(diag_sample, aes(x = actual, y = pred_rf)) +
+geom_point(alpha = 0.3, size = 0.7, color = "#66c0f4") +
+geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+scale_x_log10(labels = scales::comma) +
+scale_y_log10(labels = scales::comma) +
+labs(
+title = "Predicted vs Actual Peak CCU (Random Forest)",
+x = "Actual Peak CCU",
+y = "Predicted Peak CCU"
+)
+
+subplot(
+ggplotly(p_lm),
+ggplotly(p_rf),
+nrows = 1,
+margin = 0.05,
+titleX = TRUE,
+titleY = TRUE
+)
+
+```
 
 Beyond these summary metrics, we also compared predicted versus actual peak CCU on the test set for both models. On the log–log scale, the Random Forest predictions cluster more tightly around the 45-degree reference line than those from the linear regression, especially for games at the extremes of the popularity distribution. The linear model tends to underestimate the largest hits and overestimate some mid-range titles, whereas the Random Forest tracks these non-linear patterns more closely. 
 
