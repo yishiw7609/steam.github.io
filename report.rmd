@@ -154,13 +154,14 @@ steam_df = read_csv("data/steam_games.csv") |>
 
 # Exploratory Data Analysis
 
-In our exploratory data analysis, we want to understand what factors drive game popularity on Steam. We begin by exploring the distribution of the key outcome variable: `peak_ccu` (peak_concurrent users) along with their relationships to potential predictors such as playtime, price, release year, estimated owners, and genre/category information. In details, we are aiming to: 
+In our exploratory data analysis, we want to understand what factors drive game popularity on Steam. We begin by exploring the distribution of the key outcome variable: `peak_ccu` (peak concurrent users) along with their relationships to potential predictors such as playtime, price, release year, estimated owners, and genre/category information. In particular, we examine not only cross-sectional patterns (e.g., owners, price, reviews), but also temporal trends and engagement-related quantities such as release year and average playtime.
 
-- Identify general patterns in popularity 
+Specifically, our EDA aims to:
 
-- Assess data quality and transformations needed for modeling
+- Identify general patterns in popularity  
+- Assess data quality and transformations needed for modeling  
+- Detect early signals of which features might influence engagement over time and across different levels of player commitment
 
-- Detect early signals of which features might influence engagement
 
 ## Distribution of Peak Concurrent Users
 
