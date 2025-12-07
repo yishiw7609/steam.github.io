@@ -412,6 +412,11 @@ ggplotly(correlation_matrix)
 
 From the correlation matrix and other plots, we find `peak_ccu` and most variables are weak linearly. Therefore, for our additional analysis, instead of performing a Linear Regression, we use a Random Forest regressor to unveil relationships and interactions.
 
+In addition to these pairwise correlations, we also examined how popularity evolves across release years and how it relates to playtime. The release-year trend shows a U-shaped pattern in median peak CCU: early titles on Steam enjoy relatively high median popularity, which then declines as the catalog becomes more crowded, and rises again in recent years as the overall player base and large-scale multiplayer releases grow. 
+
+Similarly, our playtime–engagement analysis on a log–log scale indicates a clear positive association between average playtime and peak CCU. Games that keep players for many hours tend to reach higher peak concurrency, although there is substantial variation: some niche titles have modest peaks but very long sessions, while other games achieve high peaks with shorter average playtime. These temporal and engagement patterns support the decision to use flexible, non-linear models that can capture heterogeneous behaviors across different types of games.
+
+
 # Random Forest
 
 ## Modeling Strategy
@@ -506,6 +511,11 @@ NRMSE = \frac{RMSE}{Mean}
 \]
 
 NRMSE tells us the error percentage relative to the average game. The baseline model gives a RMSE of 142.43 and NRMSE of 2.99, and final model achieved a RMSE of 127.38 and a Normalized RMSE of 2.67. Considering the large variance of the dataset, our model holds a fairly stable predictive capability.
+
+Beyond these summary metrics, we also compared predicted versus actual peak CCU on the test set for both models. On the log–log scale, the Random Forest predictions cluster more tightly around the 45-degree reference line than those from the linear regression, especially for games at the extremes of the popularity distribution. The linear model tends to underestimate the largest hits and overestimate some mid-range titles, whereas the Random Forest tracks these non-linear patterns more closely. 
+
+This diagnostic comparison is consistent with the RMSE and NRMSE results and provides visual evidence that the Random Forest is better suited to capturing complex relationships in the Steam dataset.
+
 
 # Result & Discussion
 
