@@ -1,9 +1,4 @@
----
-title: "🎮 Steam Games Popularity Analysis"
-output: github_document
----
-
-**P8105 Data Science Final Project**
+## P8105 Data Science Final Project
 
 👥 **Team Members:**  
 Yishi Wang · Yutong Mao · Yiquan Zhou · Tao Wu  
