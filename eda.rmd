@@ -232,6 +232,54 @@ Starting around 2018, median popularity rises again. This increase may be influe
 Overall, release year alone does not determine a game's success, but the trend highlights structural changes in the Steam ecosystem that affect engagement differently across time.
 
 
+# Playtime and Engagement
+
+Peak CCU captures how many players are active at the same time, while playtime reflects how long players stay with a game. 
+Some titles achieve high peaks but only keep players for a short period, whereas others maintain a smaller but very loyal audience. 
+To examine this dimension of engagement, we look at how average playtime relates to peak concurrent users.
+
+```{r playtime_engagement, message=FALSE, warning=FALSE}
+playtime_ccu_plot <- steam_df |>
+  filter(
+    average_playtime > 0,
+    peak_ccu > 0
+  ) |>
+  mutate(
+    avg_playtime_hours = average_playtime / 60
+  ) |>
+  ggplot(aes(
+    x = avg_playtime_hours,
+    y = peak_ccu
+  )) +
+  geom_point(alpha = 0.2, size = 0.8, color = "#66c0f4") +
+  geom_smooth(method = "gam", color = "#e6e9f0", se = FALSE) +
+  scale_x_log10(
+    labels = scales::comma_format(accuracy = 0.1),
+    breaks = scales::trans_breaks("log10", function(x) 10^x)
+  ) +
+  scale_y_log10(
+    labels = scales::comma,
+    breaks = scales::trans_breaks("log10", function(x) 10^x)
+  ) +
+  labs(
+    title = "Average Playtime vs Peak CCU",
+    x = "Average Playtime (hours, log scale)",
+    y = "Peak CCU (log scale)"
+  )
+
+ggplotly(playtime_ccu_plot)
+
+```
+
+On the log–log scale, we see a clear positive trend: games that keep players for many hours tend to also reach higher peak CCU. 
+However, the point cloud is wide. Some games accumulate long playtimes with only moderate peak CCU, likely niche titles with very dedicated communities. 
+Other games spike to high peak CCU with relatively shorter average sessions, such as competitive or seasonal multiplayer titles.
+
+This pattern shows that popularity on Steam is multi-dimensional. 
+Concurrent users, playtime, and review sentiment capture different aspects of engagement. 
+Including playtime in our later models may help distinguish between short-lived hype and sustained engagement.
+
+
 # Popularity by Genre
 
 Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 15 most popular genres on Steam.
