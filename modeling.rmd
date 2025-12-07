@@ -132,6 +132,46 @@ NRMSE tells us the error percentage relative to the average game. The baseline m
 
 # Result & Discussion
 
+## Model Diagnostics and Comparison
+
+While RMSE and NRMSE summarize overall error, it is also helpful to visualize how well each model tracks the actual player counts. 
+Below we compare predicted versus actual peak CCU on the test set for both the linear regression baseline and the Random Forest model.
+
+```{r prediction_comparison, message=FALSE, warning=FALSE}
+pred_df <- tibble::tibble(
+  actual_peak_ccu = real_actuals,
+  `Linear Regression` = pred_lm,
+  `Random Forest`     = pred_rf
+) |>
+  tidyr::pivot_longer(
+    cols = c(`Linear Regression`, `Random Forest`),
+    names_to = "Model",
+    values_to = "predicted_peak_ccu"
+  )
+
+pred_scatter <- pred_df |>
+  ggplot(aes(x = actual_peak_ccu, y = predicted_peak_ccu, color = Model)) +
+  geom_point(alpha = 0.3, size = 0.8) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  scale_x_log10(labels = scales::comma) +
+  scale_y_log10(labels = scales::comma) +
+  labs(
+    title = "Predicted vs Actual Peak CCU on Test Set",
+    x = "Actual Peak CCU",
+    y = "Predicted Peak CCU"
+  )
+
+ggplotly(pred_scatter)
+
+```
+
+On the log–log scale, the Random Forest predictions cluster more tightly around the 45-degree reference line than those from the linear regression model. 
+This indicates that the Random Forest captures the non-linear relationships between features and peak CCU more effectively, especially for games with very high or very low traffic.
+
+The linear model systematically underestimates some of the largest hits and overestimates a portion of mid-range titles, which is consistent with its higher RMSE and NRMSE. 
+Together, the numerical metrics and the diagnostic plot support our choice of Random Forest as the primary model for explaining and predicting Steam game popularity.
+
+
 ## Findings
 From the Variable Importance Plot of our model below, there are several findings:
 
