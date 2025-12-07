@@ -179,6 +179,59 @@ ggplotly(rr_trend)
 The white trend line stays relatively flat for a long time and then curves upward sharply once the Review Ratio exceeds roughly 75%.
 This implies that moving from a "Bad" game (25%) to a "Mediocre" game (50%) yields very little gain in popularity. However, moving from "Good" (75%) to "Excellent" (95%+) yields an significant increase in peak players.
 
+
+# Release Year and Popularity Over Time
+
+Steam has grown significantly over the past two decades, and the platform environment has changed as the number of releases and the player base expanded. To understand these long-term shifts, we examine how the median popularity of games varies by release year.
+
+```{r release_year_trend, message=FALSE, warning=FALSE}
+release_trend_plot <- steam_df |>
+  mutate(
+    release_year = lubridate::year(release_date)
+  ) |>
+  filter(
+    !is.na(release_year),
+    release_year >= 2000
+  ) |>
+  group_by(release_year) |>
+  summarize(
+    n_games = n(),
+    median_peak_ccu = median(peak_ccu, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(
+    x = release_year,
+    y = median_peak_ccu,
+    text = paste0(
+      "Year: ", release_year,
+      "<br>Median peak CCU: ", scales::comma(round(median_peak_ccu, 0)),
+      "<br>Number of games: ", n_games
+    )
+  )) +
+  geom_line(color = "#1b4f72", linewidth = 1.1) +
+  geom_point(color = "#1b4f72", size = 2) +
+  scale_y_log10(labels = scales::comma) +
+  scale_x_continuous(breaks = scales::pretty_breaks()) +
+  labs(
+    title = "Median Game Popularity by Release Year",
+    x = "Release Year",
+    y = "Median Peak CCU (log scale)"
+  )
+
+ggplotly(release_trend_plot, tooltip = "text")
+
+```
+
+The trend over time reveals a U-shaped pattern in median peak CCU.  
+Games released in the early 2000s show relatively high median popularity because the Steam catalog was much smaller and successful titles dominated player attention.
+
+Between 2005 and 2015, median peak CCU declines steadily. This period corresponds to rapid growth in the number of titles on Steam, increasing competition and making it harder for individual games to stand out.
+
+Starting around 2018, median popularity rises again. This increase may be influenced by a larger global player base, stronger marketing pipelines, and the rise of large-scale multiplayer titles.
+
+Overall, release year alone does not determine a game's success, but the trend highlights structural changes in the Steam ecosystem that affect engagement differently across time.
+
+
 # Popularity by Genre
 
 Genres encapsulate game design choices, and identifying which genres drive deeper engagement is important for game developers. Below we list the top 15 most popular genres on Steam.
